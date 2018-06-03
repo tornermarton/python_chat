@@ -1,5 +1,5 @@
 import socket
-from chatserver.Pool import Pool
+from Pool import Pool
 
 
 class ChatManager:
@@ -9,15 +9,13 @@ class ChatManager:
         self._server_socket.bind((socket.gethostname(), 12345))
         self._server_socket.listen(5)
 
-
     def manager_loop(self):
         while True:
             connection, address = self._server_socket.accept()
-            print(type(connection))
-            print('Got connection from', address)
+            received = connection.recv(1024)
+            command = received[0]
+            message = received[1:]
+            if command == 1:
+                connection.send(bytes([1]) + "HELLO".encode('utf-8'))
 
-            print(connection.recv(1024))
-            message = 'HELLO'
-            connection.send(bytes([1]) + message.encode('utf-8'))
             connection.close()
-

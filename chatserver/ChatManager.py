@@ -20,3 +20,4 @@ class ChatManager:
             message = 'HELLO'
             connection.send(bytes([1]) + message.encode('utf-8'))
             connection.close()
+

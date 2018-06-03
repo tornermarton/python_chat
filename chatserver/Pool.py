@@ -21,3 +21,5 @@ class Pool:
         self._peers.remove(peer)
 
     def send_message(self, message):
+        for peer in self._peers:
+            peer.send_message(message)

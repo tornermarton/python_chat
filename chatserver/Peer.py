@@ -17,3 +17,8 @@ class Peer:
     @name.setter
     def name(self, value):
         self._name = value
+
+    def send_message(self, message):
+        self._connection.send(bytes([5]) + message.encode('utf-8'))
+
+

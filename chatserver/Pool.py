@@ -1,6 +1,3 @@
-import socket
-
-
 class Pool:
     def __init__(self, name):
         self._name = name

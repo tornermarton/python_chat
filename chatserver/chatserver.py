@@ -10,7 +10,7 @@ s.bind((host, port))        # Bind to the port
 s.listen(5)                 # Now wait for client connection.
 while True:
    c, addr = s.accept()     # Establish connection with client.
-   print('Got connection from', addr)
-   message = 'Thank you for connecting'
-   c.send(message.encode('utf-8'))
+   print('Got connection from', addr[0])
+   message = 'HELLO'
+   c.send(bytes([1]) + message.encode('utf-8'))
    c.close()                # Close the connection

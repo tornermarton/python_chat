@@ -2,8 +2,15 @@
 
 import socket
 
-from NetworkModule import *
+from DataModule import DataModule
+from NetworkModule import NetworkModule
 
 
-n = NetworkModule()
-n.connect(socket.gethostname(), 12345)
+def main():
+    d = DataModule
+    n = NetworkModule(d)
+    n.connect(socket.gethostname(), 12345)
+
+
+if __name__ == "__main__":
+    main()

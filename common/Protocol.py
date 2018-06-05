@@ -14,7 +14,9 @@ class Protocol:
         LOGOUT = 3
         SERVER = 4
         USER = 5
-        EXIT = 6
+        PING = 6
+        PONG = 7
+        EXIT = 8
 
         SEPARATOR = 29
         TERMINATOR = 127
@@ -43,6 +45,14 @@ class Protocol:
     @staticmethod
     def user_message(body):
         return Protocol.Message(Protocol.Flags.USER, body).get_message()
+
+    @staticmethod
+    def ping_message():
+        return Protocol.Message(Protocol.Flags.PING, '').get_message()
+
+    @staticmethod
+    def pong_message():
+        return Protocol.Message(Protocol.Flags.PONG, '').get_message()
 
     @staticmethod
     def exit_message():

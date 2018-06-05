@@ -4,6 +4,9 @@ from enum import IntEnum
 class Protocol:
     """The protocol for the network communication."""
 
+    _max_message_size = 1024
+    _max_message_body_size = _max_message_size - 2
+
     class Flags(IntEnum):
         """Flags (bits) used by the protocol."""
 
@@ -43,21 +46,24 @@ class Protocol:
         """Protocol messages"""
 
         def __init__(self, flag, body):
+            if len(body) > Protocol._max_message_body_size:
+                raise ValueError('Message body size can be a maximum of 1022 bytes!')
+
             if type(flag) is Protocol.Flags:        # is a real flag
-                self.__flag = flag
+                self._flag = flag
             else:                                   # is int
-                self.__flag = Protocol.Flags(flag)
+                self._flag = Protocol.Flags(flag)
 
             if type(body) is bytes:                 # is a byte array (bytes)
-                self.__body = body
+                self._body = body
             else:                                   # is a string (str)
-                self.__body = body.encode()
+                self._body = body.encode()
 
         def __str__(self):
-            return self.__body.decode()
+            return self._body.decode()
 
         def get_flag(self):
-            return self.__flag
+            return self._flag
 
         def get_message(self):
-            return bytes([self.__flag]) + self.__body + bytes([Protocol.Flags.TERMINATOR])
+            return bytes([self._flag]) + self._body + bytes([Protocol.Flags.TERMINATOR])

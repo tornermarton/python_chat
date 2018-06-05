@@ -2,9 +2,11 @@ from enum import IntEnum
 
 
 class Protocol:
-    """Class for protocol messages. Message body is in bytes."""
+    """The protocol for the network communication."""
 
     class Flags(IntEnum):
+        """Flags (bits) used by the protocol."""
+
         HELLO = 1
         LOGIN = 2
         LOGOUT = 3
@@ -38,8 +40,7 @@ class Protocol:
         return Protocol.Message(Protocol.Flags.EXIT, '')
 
     class Message:
-        __flag = 0
-        __body = ''
+        """Protocol messages"""
 
         def __init__(self, flag, body):
             if type(flag) is Protocol.Flags:        # is a real flag

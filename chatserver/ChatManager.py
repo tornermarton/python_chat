@@ -75,7 +75,7 @@ class ChatManager:
             terminator = received[-1:]
     
             if terminator != bytes([Protocol.Flags.TERMINATOR]):
-                logging.warning("terminator byte not received")
+                logging.warning("Terminator byte not received")
     
             if not hello_done:
                 if command == Protocol.Flags.HELLO:
@@ -113,39 +113,3 @@ class ChatManager:
                     connection.send(Protocol.server_message("Did u just try to send a server message to the server? XD"))
                     connection.close()
 
-        '''
-        if self.__wait_for_hello(connection):
-        
-            self.__wait_for_login(connection)
-    
-    def __wait_for_hello(self, connection):
-        received = connection.recv(1024)
-        command = received[0]
-        terminator = received[-1:]
-        if terminator != bytes([Protocol.Flags.TERMINATOR]):
-            logging.warning("terminator byte not received")
-        if command == 1:
-            logging.info("Hello received")
-            connection.send(Protocol.hello_message())
-            return True
-        else:
-            logging.error("No hello received, closing connection")
-            connection.close()
-            return False
-    
-    
-    def __wait_for_login(self, connection):
-        received = connection.recv(1024)
-        command = received[0]
-        message = received[1:]
-        terminator = received[-1:]
-        if terminator != bytes([Protocol.Flags.TERMINATOR]):
-            logging.warning("terminator byte not received")
-        if command == 1:
-            logging.info("Hello received")
-            return True
-        else:
-            logging.error("No hello received, closing connection")
-            connection.close()
-            return False
-'''

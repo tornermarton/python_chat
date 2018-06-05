@@ -10,9 +10,8 @@ def loginit():
     # logging.basicConfig(filename = 'serverlog.log', level = logging.INFO, filemode = 'w',
                         format = loginfo + logtime + logthread + logmsg)
     
-    # README
     # Használat:
     # import logging
-    # logging.info("LOGIN message received")
+    # logging.info("asdasdasdasdsda")
     # talán kicsit szebb lenne, ha ezt az osztály kéne importolni és lenne itt egy loginfo(str) függvény
 

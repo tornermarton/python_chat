@@ -1,16 +1,8 @@
-import socket, time
+import socket
 import logging, Log
 
 from ChatManager import ChatManager
 from threading import Thread
-
-
-def phantom():
-    time.sleep(1)
-    conn = socket.socket()
-    conn.connect((socket.gethostname(), 12345))
-    conn.send(bytes([1]) + "HELLO".encode('utf-8') + bytes([127]))
-    print(conn.recv(1024))
 
 
 if __name__ == '__main__':

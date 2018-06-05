@@ -14,6 +14,7 @@ class ChatManager:
         self.__server_socket = socket.socket()
         self.__server_socket.bind((socket.gethostname(), 12345))
         self.__server_socket.listen(5)
+        self.__timeout = 300
         
     
     def run(self):
@@ -36,14 +37,12 @@ class ChatManager:
         
         while True:
             connection, address = self.__server_socket.accept()
-            connection.settimeout(120)
+            connection.settimeout(self.__timeout)
             logging.info("New connection: " + str(address))
             handle_new_connection_thread = Thread(target = self.__handle_new_connection, args = [connection])
             handle_new_connection_thread.name = "Conn handler for " + str(address)
             handle_new_connection_thread.start()
-            handle_new_connection_thread.join()
     
-    # TODO
     def __handle_new_connection(self, connection: socket.socket):
         """
         Receives data from peer on the connection
@@ -60,6 +59,9 @@ class ChatManager:
                 logging.warning("Connection timeout")
                 connection.send(Protocol.server_message("Connection timeout"))
                 connection.close()
+                break
+            except ConnectionResetError:
+                logging.warning("Connection closed by client")
                 break
     
     
@@ -90,6 +92,7 @@ class ChatManager:
                     logging.warning("HELLO message received again")
                     connection.send(Protocol.hello_message())
         
+                # TODO
                 if command == Protocol.Flags.LOGIN:
                     logging.info("LOGIN message received")
         
@@ -103,6 +106,7 @@ class ChatManager:
                     logging.info("EXIT message received, connection closed")
                     connection.send(Protocol.server_message("See you later"))
                     connection.close()
+                    break
         
                 elif command == Protocol.Flags.SERVER:
                     logging.warning("Server received SERVER message, connection closed")

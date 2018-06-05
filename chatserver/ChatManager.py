@@ -14,7 +14,6 @@ class ChatManager:
         self.__server_socket = socket.socket()
         self.__server_socket.bind((socket.gethostname(), 12345))
         self.__server_socket.listen(5)
-        self.__timeout = 300
     
     
     def run(self):
@@ -25,7 +24,7 @@ class ChatManager:
         """
         
         accept_new_connection_thread = Thread(target = self.__accept_new_connection)
-        accept_new_connection_thread.name = "Accept new conn"
+        accept_new_connection_thread.name = "Accept new connection thread"
         accept_new_connection_thread.start()
     
     def __accept_new_connection(self):
@@ -37,7 +36,7 @@ class ChatManager:
         
         while True:
             connection, address = self.__server_socket.accept()
-            connection.settimeout(self.__timeout)
+            # connection.settimeout(300)
             logging.info("New connection: " + str(address))
             handle_new_connection_thread = Thread(target = self.__handle_new_connection, args = [connection])
             handle_new_connection_thread.name = "Conn handler for " + str(address)
@@ -45,7 +44,7 @@ class ChatManager:
     
     def __handle_new_connection(self, connection: socket.socket):
         """
-        Receives data from peer on the connection
+        Receives and handles data from peer on the connection
         
         :param connection: The peer can send data on this connection
         :return: None
@@ -55,7 +54,7 @@ class ChatManager:
         while True:
             
             valid, command, message = self.__receive_message(connection)
-            
+            message: bytes
             if not valid:
                 break
             
@@ -76,7 +75,10 @@ class ChatManager:
                 
                 # TODO
                 if command == Protocol.Flags.LOGIN:
-                    logging.info("LOGIN message received")
+                    username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
+                    poolname = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
+                    logging.info("LOGIN from " + username + " for joining " + poolname)
+                    
                 
                 elif command == Protocol.Flags.LOGOUT:
                     logging.info("LOGOUT message received")
@@ -97,6 +99,13 @@ class ChatManager:
     
     @staticmethod
     def __receive_message(connection: socket.socket):
+        """
+        
+        Receives the data and checks its validity
+        
+        :param connection:
+        :return:
+        """
         
         try:
             received = connection.recv(Protocol.max_message_size)
@@ -105,7 +114,7 @@ class ChatManager:
             logging.warning("Connection timeout")
             connection.send(Protocol.server_message("Connection timeout"))
             connection.close()
-            return False
+            return False, "", ""
         
         except ConnectionResetError:
             logging.warning("Connection closed by client")
@@ -115,7 +124,7 @@ class ChatManager:
             logging.warning("Connection unexpectedly closed or no byte received")
             connection.send(Protocol.server_message("Whatever happened, you probably cannot receive this message :("))
             connection.close()
-            return False
+            return False, "", ""
         
         command = received[0]
         message = received[1:-1]

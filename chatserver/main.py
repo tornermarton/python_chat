@@ -19,11 +19,11 @@ if __name__ == '__main__':
     logthread = "%(threadName)-50s"
     logmsg = "%(message)s"
     
-    # logging.basicConfig(level=logging.INFO,
-    logging.basicConfig(filename = 'serverlog.log', level = logging.INFO, filemode = 'w',
+    logging.basicConfig(level=logging.INFO,
+    # logging.basicConfig(filename = 'serverlog.log', level = logging.INFO, filemode = 'w',
                         format = loginfo + logtime + logthread + logmsg)
     
-    logging.info("Logging started")
+    logging.info("Logging started, host: " + socket.gethostname())
     
     cm = ChatManager()
     t = Thread(target = cm.run)

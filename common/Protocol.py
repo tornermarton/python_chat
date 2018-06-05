@@ -1,11 +1,10 @@
+#!/usr/bin/python3
+
 from enum import IntEnum
 
 
 class Protocol:
     """The protocol for the network communication."""
-
-    _max_message_size = 1024
-    _max_message_body_size = _max_message_size - 2
 
     class Flags(IntEnum):
         """Flags (bits) used by the protocol."""
@@ -18,52 +17,57 @@ class Protocol:
         EXIT = 6
         TERMINATOR = 127
 
+# static
+
+    max_message_size = 1024
+    max_message_body_size = max_message_size - 2
+
     @staticmethod
     def hello_message():
-        return Protocol.Message(Protocol.Flags.HELLO, '')
+        return Protocol.Message(Protocol.Flags.HELLO, '').get_message()
 
     @staticmethod
     def login_message(body):
-        return Protocol.Message(Protocol.Flags.LOGIN, body)
+        return Protocol.Message(Protocol.Flags.LOGIN, body).get_message()
 
     @staticmethod
     def logout_message():
-        return Protocol.Message(Protocol.Flags.LOGOUT, '')
+        return Protocol.Message(Protocol.Flags.LOGOUT, '').get_message()
 
     @staticmethod
     def server_message(body):
-        return Protocol.Message(Protocol.Flags.SERVER, body)
+        return Protocol.Message(Protocol.Flags.SERVER, body).get_message()
 
     @staticmethod
     def user_message(body):
-        return Protocol.Message(Protocol.Flags.USER, body)
+        return Protocol.Message(Protocol.Flags.USER, body).get_message()
 
     @staticmethod
     def exit_message():
-        return Protocol.Message(Protocol.Flags.EXIT, '')
+        return Protocol.Message(Protocol.Flags.EXIT, '').get_message()
 
     class Message:
         """Protocol messages"""
 
         def __init__(self, flag, body):
-            if len(body) > Protocol._max_message_body_size:
+            if len(body) > Protocol.max_message_body_size:
                 raise ValueError('Message body size can be a maximum of 1022 bytes!')
 
             if type(flag) is Protocol.Flags:        # is a real flag
-                self._flag = flag
+                self.__flag = flag
             else:                                   # is int
-                self._flag = Protocol.Flags(flag)
+                self.__flag = Protocol.Flags(flag)
 
             if type(body) is bytes:                 # is a byte array (bytes)
-                self._body = body
+                self.__body = body
             else:                                   # is a string (str)
-                self._body = body.encode()
+                self.__body = body.encode()
 
         def __str__(self):
-            return self._body.decode()
+            return self.__body.decode()
 
         def get_flag(self):
-            return self._flag
+            return self.__flag
 
         def get_message(self):
-            return bytes([self._flag]) + self._body + bytes([Protocol.Flags.TERMINATOR])
+            return bytes([self.__flag]) + self.__body + bytes([Protocol.Flags.TERMINATOR])

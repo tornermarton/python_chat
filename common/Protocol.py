@@ -15,6 +15,8 @@ class Protocol:
         SERVER = 4
         USER = 5
         EXIT = 6
+
+        SEPARATOR = 29
         TERMINATOR = 127
 
 # static
@@ -48,6 +50,8 @@ class Protocol:
 
     class Message:
         """Protocol messages"""
+
+    # public
 
         def __init__(self, flag, body):
             if len(body) > Protocol.max_message_body_size:

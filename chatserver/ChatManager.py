@@ -1,8 +1,7 @@
 import socket, logging, time
 from threading import Thread
 from Pool import Pool
-from Flags import Flags
-
+from Protocol import Protocol
 
 class ChatManager:
     def __init__(self):
@@ -11,27 +10,6 @@ class ChatManager:
         self.__server_socket.bind((socket.gethostname(), 12345))
         self.__server_socket.listen(5)
     
-    def manager_loop(self):
-        while True:
-            connection, address = self.__server_socket.accept()
-            received = connection.recv(1024)
-            command = received[0]
-            message = received[1:]
-            if command == 1:
-                print("hello")
-                connection.send(bytes([1]) + "HELLO".encode('utf-8'))
-            elif command == 2:
-                print("login")
-            elif command == 3:
-                print("logout")
-            elif command == 5:
-                print("user message")
-            elif command == 6:
-                print("exit")
-            
-            print(address)
-            
-            connection.close()
     
     def run(self):
         accept_new_connection_thread = Thread(target = self.__accept_new_connection)
@@ -49,6 +27,39 @@ class ChatManager:
     
     # TODO
     def __handle_new_connection(self, connection):
+    
+        hello_done = False
+        while True:
+            received = connection.recv(1024)
+            command = received[0]
+            terminator = received[-1:]
+            
+            if terminator != bytes([Protocol.Flags.TERMINATOR]):
+                logging.warning("terminator byte not received")
+                
+            if not hello_done:
+                if command == Protocol.Flags.HELLO:
+                    logging.info("HELLO message received")
+                    connection.send(Protocol.hello_message())
+                    hello_done = True
+                else:
+                    logging.error("No HELLO received, closing connection")
+                    connection.close()
+                    break
+            
+            else:
+                if command == Protocol.Flags.LOGIN:
+                    logging.info("LOGIN message received")
+                elif command == Protocol.Flags.LOGOUT:
+                    logging.info("LOGOUT message received")
+                elif command == Protocol.Flags.USER:
+                    logging.info("USER message received")
+                elif command == Protocol.Flags.EXIT:
+                    logging.info("EXIT message received")
+                elif command == Protocol.Flags.SERVER:
+                    logging.error("Server received SERVER message")
+            
+'''
         if self.__wait_for_hello(connection):
             self.__wait_for_login(connection)
     
@@ -56,11 +67,11 @@ class ChatManager:
         received = connection.recv(1024)
         command = received[0]
         terminator = received[-1:]
-        if terminator != bytes([Flags.TERMINATOR]):
+        if terminator != bytes([Protocol.Flags.TERMINATOR]):
             logging.warning("terminator byte not received")
         if command == 1:
             logging.info("Hello received")
-            connection.send(bytes([Flags.HELLO]) + "HELLO".encode('utf-8') + bytes([Flags.TERMINATOR]))
+            connection.send(Protocol.hello_message())
             return True
         else:
             logging.error("No hello received, closing connection")
@@ -73,13 +84,13 @@ class ChatManager:
         command = received[0]
         message = received[1:]
         terminator = received[-1:]
-        if terminator != bytes([Flags.TERMINATOR]):
+        if terminator != bytes([Protocol.Flags.TERMINATOR]):
             logging.warning("terminator byte not received")
         if command == 1:
             logging.info("Hello received")
-            connection.send(bytes([Flags.HELLO]) + "HELLO".encode('utf-8') + bytes([Flags.TERMINATOR]))
             return True
         else:
             logging.error("No hello received, closing connection")
             connection.close()
             return False
+'''

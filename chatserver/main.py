@@ -1,5 +1,5 @@
-import logging
 import socket, time
+import logging, Log
 
 from ChatManager import ChatManager
 from threading import Thread
@@ -14,15 +14,7 @@ def phantom():
 
 
 if __name__ == '__main__':
-    loginfo = "%(levelname)-10s"
-    logtime = "%(asctime)s "
-    logthread = "%(threadName)-50s"
-    logmsg = "%(message)s"
-    
-    logging.basicConfig(level=logging.INFO,
-    # logging.basicConfig(filename = 'serverlog.log', level = logging.INFO, filemode = 'w',
-                        format = loginfo + logtime + logthread + logmsg)
-    
+    Log.loginit()
     logging.info("Logging started, host: " + socket.gethostname())
     
     cm = ChatManager()

@@ -20,4 +20,4 @@ class Peer:
         self.__name = value
 
     def send_message(self, message):
-        self.__connection.send(bytes([5]) + message.encode('utf-8'))
+        self.__connection.sendall(bytes([5]) + message.encode('utf-8'))

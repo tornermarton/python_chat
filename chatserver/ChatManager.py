@@ -45,8 +45,7 @@ class ChatManager:
             handle_new_connection_thread.name = "Message handler on " + str(address)
             handle_new_connection_thread.start()
     
-    @staticmethod
-    def __message_handler(connection: socket.socket) -> None:
+    def __message_handler(self, connection: socket.socket) -> None:
         """
         
         
@@ -88,55 +87,73 @@ class ChatManager:
             except ConnectionResetError:
                 logging.warning("Connection closed by client without EXIT")
                 break
+                
             command = received[0]
             message_body = received[1:terminator_index]
             received = received[terminator_index+1:]
         
             if not hello_done:
-                if command == Protocol.Flags.HELLO:
-                    logging.info("HELLO message received")
-                    connection.sendall(Protocol.hello_message())
-                    hello_done = True
-                else:
-                    logging.warning("No HELLO received, closing connection")
-                    connection.close()
-                    break
-            else:
-                if command == Protocol.Flags.HELLO:
-                    logging.warning("HELLO message received again")
-                    connection.sendall(Protocol.hello_message())
-            
-                if command == Protocol.Flags.LOGIN:
-                    username = message_body.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
-                    poolname = message_body.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
-                    logging.info("LOGIN from \"" + username + "\" for joining \"" + poolname + "\"")
-            
-            
-                elif command == Protocol.Flags.LOGOUT:
-                    logging.info("LOGOUT message received")
-            
-                elif command == Protocol.Flags.USER:
-                    logging.info("USER message received")
-            
-                elif command == Protocol.Flags.PING:
-                    logging.info("PING message received")
-                    connection.sendall(Protocol.pong_message())
-            
-                elif command == Protocol.Flags.PONG:
-                    logging.info("PONG message received")
-            
-                elif command == Protocol.Flags.EXIT:
-                    logging.info("EXIT message received, connection closed")
-                    connection.sendall(Protocol.server_message("See you later"))
-                    connection.close()
-                    break
-            
-                elif command == Protocol.Flags.SERVER:
-                    logging.warning("Server received SERVER message, connection closed")
-                    connection.sendall(Protocol.server_message("Did u just try to send a server message to the server? XD"))
-                    connection.close()
+                hello_done = self.__receive_hello(connection, command)
+                if not hello_done:
                     break
                     
-                else:
-                    logging.warning("Invalid message received")
+            elif self.__process_message(connection, command, message_body):
+                    break
 
+    @staticmethod
+    def __receive_hello(connection: socket.socket, command: bytes):
+        if command == Protocol.Flags.HELLO:
+            logging.info("HELLO message received")
+            connection.sendall(Protocol.hello_message())
+            return True
+        else:
+            logging.warning("No HELLO received, closing connection")
+            connection.close()
+            return False
+
+
+    def __process_message(self, connection: socket.socket, command: bytes, message: bytes)-> bool:
+        """
+        
+        :param connection:
+        :param command:
+        :param message:
+        :return: True, if connection should be closed
+        """
+
+        if command == Protocol.Flags.HELLO:
+            logging.warning("HELLO message received again")
+            connection.sendall(Protocol.hello_message())
+
+        if command == Protocol.Flags.LOGIN:
+            username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
+            poolname = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
+            logging.info("LOGIN from \"" + username + "\" for joining \"" + poolname + "\"")
+
+
+        elif command == Protocol.Flags.LOGOUT:
+            logging.info("LOGOUT message received")
+
+        elif command == Protocol.Flags.USER:
+            logging.info("USER message received")
+
+        elif command == Protocol.Flags.PING:
+            logging.info("PING message received")
+            connection.sendall(Protocol.pong_message())
+
+        elif command == Protocol.Flags.PONG:
+            logging.info("PONG message received")
+
+        elif command == Protocol.Flags.EXIT:
+            logging.info("EXIT message received, connection closed")
+            connection.sendall(Protocol.server_message("See you later"))
+            return True
+        elif command == Protocol.Flags.SERVER:
+            logging.warning("Server received SERVER message, connection closed")
+            connection.sendall(Protocol.server_message("Did u just try to send a server message to the server? XD"))
+            return True
+
+        else:
+            logging.warning("Invalid message received")
+
+        

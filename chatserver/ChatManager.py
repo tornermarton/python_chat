@@ -2,6 +2,7 @@ import socket, logging, time, select
 from threading import Thread
 from Pool import Pool
 from Protocol import Protocol
+from Peer import Peer
 
 
 class ChatManager:
@@ -129,6 +130,14 @@ class ChatManager:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             poolname = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
             logging.info("LOGIN from \"" + username + "\" for joining \"" + poolname + "\"")
+            peer = Peer(username, connection, poolname)
+            if poolname in self.__pools:
+                logging.debug("Pool already exists")
+                self.__pools[poolname].add_peer(peer)
+            else:
+                logging.debug("Pool not exists, creating")
+                self.__pools[poolname] = Pool(poolname)
+                self.__pools[poolname].add_peer(peer)
 
 
         elif command == Protocol.Flags.LOGOUT:
@@ -154,6 +163,7 @@ class ChatManager:
             return True
 
         else:
+            connection.sendall(Protocol.server_message("Invalid message received"))
             logging.warning("Invalid message received")
 
         

@@ -80,7 +80,20 @@ class ChatManager:
             
             
                 logging.debug("Message received: " + str(received))
-        
+
+                command = received[0]
+                message_body = received[1:terminator_index]
+                received = received[terminator_index + 1:]
+    
+                if not hello_done:
+                    hello_done = self.__receive_hello(peer, command)
+                    if not hello_done:
+                        break
+    
+                elif self.__process_message(peer, command, message_body):
+                    peer.terminate()
+                    break
+
             except socket.timeout:
                 logging.warning("Connection timeout")
                 peer.send(Protocol.server_message("Connection timeout"))
@@ -88,7 +101,7 @@ class ChatManager:
                 break
                 
             except ConnectionResetError:
-                logging.warning("Connection closed by client without EXIT")
+                logging.warning("Connection is reset by the peer")
                 peer.terminate()
                 break
                 
@@ -97,18 +110,6 @@ class ChatManager:
                 peer.terminate()
                 break
                 
-            command = received[0]
-            message_body = received[1:terminator_index]
-            received = received[terminator_index+1:]
-        
-            if not hello_done:
-                hello_done = self.__receive_hello(peer, command)
-                if not hello_done:
-                    break
-                    
-            elif self.__process_message(peer, command, message_body):
-                peer.terminate()
-                break
 
     @staticmethod
     def __receive_hello(peer: Peer, command: bytes):
@@ -121,7 +122,6 @@ class ChatManager:
             logging.warning("No HELLO received, closing connection")
             peer.terminate()
             return False
-
 
     def __process_message(self, peer: Peer, command: bytes, message: bytes)-> bool:
         """
@@ -153,6 +153,7 @@ class ChatManager:
                 self.__pools[poolname].add_peer(peer)
 
             peer.pool = self.__pools[poolname]
+            peer.pool.send_message(Protocol.server_message(username + " has joined the room"))
             
 
         elif command == Protocol.Flags.LOGOUT:
@@ -161,6 +162,7 @@ class ChatManager:
 
         elif command == Protocol.Flags.USER:
             logging.info("USER message received")
+            peer.pool.send_message(message)
 
         elif command == Protocol.Flags.PING:
             logging.info("PING message received")

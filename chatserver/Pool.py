@@ -5,11 +5,11 @@ import Peer
 class Pool:
     
     def __init__(self, name):
-        self.__name = name
+        self.__name: str = name
         self.__peers: List[Peer.Peer] = []
     
     @property
-    def name(self):
+    def name(self) -> str:
         return self.__name
     
     @name.setter
@@ -22,6 +22,6 @@ class Pool:
     def remove_peer(self, peer: Peer):
         self.__peers.remove(peer)
     
-    def send_message(self, message: str):
+    def send_message(self, message: bytes):
         for peer in self.__peers:
-            peer.send(message.encode("utf-8"))
+            peer.send(message)

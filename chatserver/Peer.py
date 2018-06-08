@@ -24,25 +24,17 @@ class Peer:
         self.__username = value
     
     @property
-    def pool(self):
+    def pool(self) -> Pool:
         return self.__pool
     
     @pool.setter
     def pool(self, value: Pool):
         self.__pool = value
-    
-    @property
-    def connection(self):
-        return self.__connection
-    
-    @connection.setter
-    def connection(self, value: socket):
-        self.__connection = value
-    
+        
     def send(self, bytes_message: bytes):
         self.__connection.sendall(bytes_message)
     
-    def receive(self):
+    def receive(self) -> bytes:
         try:
             return self.__connection.recv(Protocol.max_message_size)
         except ConnectionAbortedError:

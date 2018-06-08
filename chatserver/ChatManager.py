@@ -32,7 +32,7 @@ class ChatManager:
     
     def __accept_new_connection(self):
         """
-        Only accepts the incoming connection, then starts a thread for receiving data
+        Accepts the incoming connection, creates Peer for the connection, then starts a thread for receiving data
 
         :return: None
         """
@@ -106,6 +106,7 @@ class ChatManager:
         if command == Protocol.Flags.HELLO:
             logging.info("HELLO message received")
             connection.sendall(Protocol.hello_message())
+            connection.sendall(Protocol.server_message("Welcome to the server"))
             return True
         else:
             logging.warning("No HELLO received, closing connection")
@@ -130,7 +131,7 @@ class ChatManager:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             poolname = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
             logging.info("LOGIN from \"" + username + "\" for joining \"" + poolname + "\"")
-            peer = Peer(username, connection, poolname)
+            peer = Peer(username, connection)
             if poolname in self.__pools:
                 logging.debug("Pool already exists")
                 self.__pools[poolname].add_peer(peer)

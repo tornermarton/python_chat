@@ -1,13 +1,12 @@
 from typing import List
-from Peer import Peer
+import Peer
 
 
 class Pool:
-    __peers: List[Peer]
     
     def __init__(self, name):
         self.__name = name
-        self.__peers = []
+        self.__peers: List[Peer.Peer] = []
     
     @property
     def name(self):
@@ -25,4 +24,4 @@ class Pool:
     
     def send_message(self, message: str):
         for peer in self.__peers:
-            peer.send_message(message)
+            peer.send(message.encode("utf-8"))

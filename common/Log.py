@@ -7,5 +7,5 @@ def loginit():
     logmsg = "%(message)s"
     
     logging.basicConfig(level = logging.DEBUG,
-    # logging.basicConfig(filename = 'serverlog.log', level = logging.INFO, filemode = 'w',
+    # logging.basicConfig(filename = 'serverlog.log', level = logging.DEBUG, filemode = 'w',
                         format = loginfo + logtime + logthread + logmsg)

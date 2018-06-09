@@ -162,7 +162,10 @@ class ChatManager:
 
         elif command == Protocol.Flags.USER:
             logging.info("USER message received")
-            peer.pool.send_message(message)
+            if not peer.is_logged_in():
+                peer.send(Protocol.server_message("You gotta log in first"))
+            else:
+                peer.pool.send_message(message)
 
         elif command == Protocol.Flags.PING:
             logging.info("PING message received")

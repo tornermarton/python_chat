@@ -40,6 +40,8 @@ class Peer:
         except ConnectionAbortedError:
             raise
     
+    def is_logged_in(self)->bool:
+        return self.__pool is not None
     
     def terminate(self):
         

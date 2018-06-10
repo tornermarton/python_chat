@@ -1,4 +1,4 @@
-import socket, logging, time, select
+import socket, logging, time, ssl
 from threading import Thread
 from Pool import Pool
 from Protocol import Protocol
@@ -16,6 +16,11 @@ class ChatManager:
         self.__server_socket = socket.socket()
         self.__server_socket.bind((socket.gethostname(), 12345))
         self.__server_socket.listen(5)
+        
+        self.__context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        self.__context.load_cert_chain(certfile = "cert.pem")  # 1. key, 2. cert, 3. intermediates
+        self.__context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
+        self.__context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
         
         self.__timeout = 10 * 60
     
@@ -37,7 +42,11 @@ class ChatManager:
         :return: None
         """
         while True:
-            connection, address = self.__server_socket.accept()
+            sock, address = self.__server_socket.accept()
+
+            # connection = self.__context.wrap_socket(sock, server_side = True)
+            connection = sock
+            
             connection.settimeout(self.__timeout)
             
             logging.info("New connection: " + str(address))

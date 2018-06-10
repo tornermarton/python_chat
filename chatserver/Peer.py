@@ -30,29 +30,55 @@ class Peer:
     @pool.setter
     def pool(self, value: Pool):
         self.__pool = value
-        
+    
     def send(self, bytes_message: bytes):
         self.__connection.sendall(bytes_message)
     
     def receive(self) -> bytes:
+        
+        """
+        
+        Receives a message on its connection
+        
+        :return:
+        """
+        
         try:
             return self.__connection.recv(Protocol.max_message_size)
         except ConnectionAbortedError:
             raise
     
-    def is_logged_in(self)->bool:
+    def is_logged_in(self) -> bool:
+        """
+        
+        :return:    True, if the peer is in a pool
+        """
         return self.__pool is not None
     
     def terminate(self):
+        """
+        
+        The peer closes the connection and exits the pool
+        
+        :return:
+        """
         
         self.__connection.close()
         
         if self.__pool is not None:
             self.__pool.remove_peer(self)
-            
+        
         logging.info("User \"" + self.__username + "\" terminated")
     
     def leave_pool(self):
+        
+        """
+        
+        The peer leaves the pool
+        
+        :return:
+        """
+        
         if self.__pool is not None:
             self.__pool.remove_peer(self)
         self.__pool = None

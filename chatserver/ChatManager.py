@@ -54,65 +54,71 @@ class ChatManager:
         :param peer:
         :return:
         """
-    
+        
         hello_done = False
         received: bytes = "".encode("utf-8")
         while True:
             try:
-            
+                
                 part: bytes
                 terminator_index = received.find(bytes([Protocol.Flags.TERMINATOR]))
                 while terminator_index == -1:
                     part = peer.receive()
                     received += part
-                
+                    
                     terminator_index = received.find(bytes([Protocol.Flags.TERMINATOR]))
-                
+                    
                     if len(part) == 0:
                         logging.warning("Connection unexpectedly closed")
                         peer.terminate()
                         break
-            
-            
+                
                 if len(part) == 0:
                     if terminator_index == -1:
                         break
-            
-            
+                
                 logging.debug("Message received: " + str(received))
-
+                
                 command = received[0]
                 message_body = received[1:terminator_index]
                 received = received[terminator_index + 1:]
-    
+                
                 if not hello_done:
                     hello_done = self.__receive_hello(peer, command)
                     if not hello_done:
                         break
-    
+                
                 elif self.__process_message(peer, command, message_body):
                     peer.terminate()
                     break
-
+            
             except socket.timeout:
                 logging.warning("Connection timeout")
                 peer.send(Protocol.server_message("Connection timeout"))
                 peer.terminate()
                 break
-                
+            
             except ConnectionResetError:
                 logging.warning("Connection is reset by the peer")
                 peer.terminate()
                 break
-                
+            
             except ConnectionAbortedError:
                 logging.warning("Connection closed by client without EXIT")
                 peer.terminate()
                 break
-                
-
+    
+    
     @staticmethod
     def __receive_hello(peer: Peer, command: bytes):
+        """
+        
+        Tries to receives HELLO, if the message is not HELLO, terminates the peer
+        
+        :param peer:
+        :param command:
+        :return:    True, if HELLO message has been received
+        """
         if command == Protocol.Flags.HELLO:
             logging.info("HELLO message received")
             peer.send(Protocol.hello_message())
@@ -122,20 +128,22 @@ class ChatManager:
             logging.warning("No HELLO received, closing connection")
             peer.terminate()
             return False
-
-    def __process_message(self, peer: Peer, command: bytes, message: bytes)-> bool:
+    
+    def __process_message(self, peer: Peer, command: bytes, message: bytes) -> bool:
         """
+        
+        Processes the received message
         
         :param peer:
         :param command:
         :param message:
         :return: True, if connection should be closed
         """
-
+        
         if command == Protocol.Flags.HELLO:
             logging.warning("HELLO message received again")
             peer.send(Protocol.hello_message())
-
+        
         if command == Protocol.Flags.LOGIN:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             poolname = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
@@ -151,29 +159,29 @@ class ChatManager:
                 logging.debug("Pool not exists, creating")
                 self.__pools[poolname] = Pool(poolname)
                 self.__pools[poolname].add_peer(peer)
-
+            
             peer.pool = self.__pools[poolname]
             peer.pool.send_message(Protocol.server_message(username + " has joined the room"))
-            
-
+        
+        
         elif command == Protocol.Flags.LOGOUT:
             logging.info("LOGOUT message received")
             peer.leave_pool()
-
+        
         elif command == Protocol.Flags.USER:
             logging.info("USER message received")
             if not peer.is_logged_in():
                 peer.send(Protocol.server_message("You gotta log in first"))
             else:
                 peer.pool.send_message(message)
-
+        
         elif command == Protocol.Flags.PING:
             logging.info("PING message received")
             peer.send(Protocol.pong_message())
-
+        
         elif command == Protocol.Flags.PONG:
             logging.info("PONG message received")
-
+        
         elif command == Protocol.Flags.EXIT:
             logging.info("EXIT message received, connection closed")
             peer.send(Protocol.server_message("See you later"))
@@ -182,9 +190,7 @@ class ChatManager:
             logging.warning("Server received SERVER message, connection closed")
             peer.send(Protocol.server_message("Did u just try to send a server message to the server? XD"))
             return True
-
+        
         else:
             peer.send(Protocol.server_message("Invalid message received"))
             logging.warning("Invalid message received")
-
-        

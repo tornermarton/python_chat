@@ -22,6 +22,7 @@ class Pool:
     def remove_peer(self, peer: Peer):
         self.__peers.remove(peer)
     
-    def send_message(self, message: bytes):
+    def send_message(self, message: bytes, sender: Peer):
         for peer in self.__peers:
-            peer.send(message)
+            if peer is not sender:
+                peer.send(message)

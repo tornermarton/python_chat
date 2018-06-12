@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+from typing import List
+
 from Protocol import *
 
 
@@ -11,10 +13,10 @@ class DataModule:
     def __init__(self):
         self.__username = 'a_basic_noob'
         self.__current_room_name = ''
-        self.__messages = [Protocol.Message]
+        self.__messages = List[Protocol.Message]
 
     @property
-    def username(self):
+    def username(self) -> str:
         return self.__username
 
     @username.setter
@@ -22,18 +24,15 @@ class DataModule:
         self.__username = value
 
     @property
-    def current_room_name(self):
+    def current_room_name(self) -> str:
         return self.__current_room_name
 
     @current_room_name.setter
     def current_room_name(self, value: str):
         self.__current_room_name = value
 
-    def has_message(self):
+    def has_message(self) -> bool:
         return len(self.__messages) != 0
 
     def add_message(self, message: Protocol.Message):
         self.__messages.append(message)
-
-    def read_message(self):
-        self.__messages.pop(0)

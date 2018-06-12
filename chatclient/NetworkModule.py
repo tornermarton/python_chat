@@ -4,7 +4,7 @@ import socket
 
 from threading import Thread
 from Protocol import Protocol
-import DataModule
+import ChatModule
 import logging
 
 
@@ -28,27 +28,25 @@ class NetworkModule:
                     body = messages[i][1:]
                 self.__process_message(Protocol.Message(flag, body))
 
-    def __process_message(self, message: Protocol.Message):
+    def __process_message(self, message: Protocol.Message) -> None:
         flag = message.get_flag()
 
         if flag in (Protocol.Flags.SERVER, Protocol.Flags.USER):
-            self.__data_module.add_message(message)
+            self.__chat_module.receive_message(message)
         elif flag == Protocol.Flags.PING:
             self.send(Protocol.pong_message())
-        else:
-            logging.warning('Message received with wrong flag. Ignoring it!')
 
 # public
 
-    def __init__(self, data_module: DataModule):
-        self.__data_module = data_module
+    def __init__(self, chat_module: ChatModule):
+        self.__chat_module = chat_module
 
         self.__thread = Thread(target=self.__listen)
         self.__thread.name = 'NetworkModule listener'
         self.__socket = socket.socket()
         self.__connected = False
 
-    def connect(self, host: str, port: int):
+    def connect(self, host: str, port: int) -> None:
         # connect to the server
         self.__socket.connect((host, port))
         self.__connected = True
@@ -59,10 +57,12 @@ class NetworkModule:
         # send first message (hello)
         self.send(Protocol.hello_message())
 
-    def disconnect(self):
+    def disconnect(self) -> None:
+        self.send(Protocol.logout_message())
+        self.send(Protocol.exit_message())
         self.__connected = False
         self.__thread.join()
         self.__socket.close()
 
-    def send(self, message: bytes):
+    def send(self, message: bytes) -> None:
         self.__socket.send(message)

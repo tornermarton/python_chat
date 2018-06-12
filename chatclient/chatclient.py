@@ -1,15 +1,16 @@
 #!/usr/bin/python           # This is client.py file
 
-import socket
+import sys
+from PySide2 import QtWidgets
 
-from DataModule import DataModule
-from NetworkModule import NetworkModule
+from Client import Client
 
 
 def main():
-    d = DataModule
-    n = NetworkModule(d)
-    n.connect(socket.gethostname(), 12345)
+    app = QtWidgets.QApplication(sys.argv)
+    c = Client()
+    c.run()
+    sys.exit(app.exec_())
 
 
 if __name__ == "__main__":

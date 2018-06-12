@@ -50,7 +50,7 @@ class Peer:
         except ConnectionAbortedError:
             raise
     
-    def is_logged_in(self) -> bool:
+    def has_joined(self) -> bool:
         """
         
         :return:    True, if the peer is in a pool

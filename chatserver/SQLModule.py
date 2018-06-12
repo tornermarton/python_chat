@@ -20,7 +20,7 @@ class SQLModule:
             SQLModule.conn.rollback()
             logging.error("SQL Error: " + str(e))
             pass
-            return -1
+            return -2  # szebben kéne
         
         if SQLModule.cursor.rowcount == 1:
             return info[0][0]
@@ -35,7 +35,7 @@ class SQLModule:
             SQLModule.cursor.execute(query, data)
             SQLModule.conn.commit()
             if SQLModule.cursor.rowcount == 1:
-                logging.info(str(data) + " inserted into database")
+                logging.debug(str(data) + " inserted into database")
             else:
                 logging.warning(str(data) + " is already in the database")  # nem kell sztem
         
@@ -95,8 +95,16 @@ class SQLModule:
         def add_pool(pool_name: str, hashed_pwd: str):
             query = "INSERT IGNORE INTO Pools (pool_name, hashed_pwd, last_message) VALUES (%s, %s, %s)"
             SQLModule.insert_wrapper(query, (pool_name, hashed_pwd, SQLModule.now()))
+            
+    
+    class SwitchTable:
+        
+        @staticmethod
+        def add_peer_pool(peer_id: int, pool_id: int):
+            query = "INSERT IGNORE INTO pools_peers_connector (Peers_peer_id, Pools_pool_id) VALUES (%s, %s)"
+            SQLModule.insert_wrapper(query, (peer_id, pool_id, ))
 
 
-Log.loginit()
-a = SQLModule()
-SQLModule.PeersSQLModule.add_peer("fffasd12asd31", "asd213")
+# Log.loginit()
+# a = SQLModule()
+# SQLModule.PoolsSQLModule.add_pool("general", "general")

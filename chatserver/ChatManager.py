@@ -31,9 +31,9 @@ class ChatManager:
         # context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
         # connectionToServer = context.wrap_socket(sock, server_hostname = "pychat")
         # connectionToServer.connect(("192.168.1.19", 12345))
-
-        self.__timeout = 10 * 60
         
+        self.__timeout = 10 * 60
+    
     def run(self):
         """
         Starts accepting connections
@@ -53,7 +53,7 @@ class ChatManager:
         """
         while True:
             sock, address = self.__server_socket.accept()
-
+            
             # connection = self.__context.wrap_socket(sock, server_side = True)
             connection = sock
             
@@ -163,33 +163,65 @@ class ChatManager:
             logging.warning("HELLO message received again")
             peer.send(Protocol.hello_message())
         
-        if command == Protocol.Flags.LOGIN:
+        elif command == Protocol.Flags.LOGIN:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
-            poolname = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
+            hashed_pwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
             
-            logging.info("LOGIN from \"" + username + "\" for joining \"" + poolname + "\"")
+            logging.info("LOGIN from \"" + username + "\" with hash \"" + hashed_pwd + "\"")
             
-            peer.name = username
+            pool_id = SQLModule.PeersSQLModule.get_id(username)
+            if pool_id == -1 or hashed_pwd == SQLModule.PeersSQLModule.get_hashed_pwd(username):
+                SQLModule.PeersSQLModule.add_peer(username, hashed_pwd)
+                logging.info("Account created for \"" + username + "\"")
+                peer.send(Protocol.server_message("Account created for \"" + username + "\""))
+                peer.name = username
+                logging.info("\"" + username + "\" has logged in succesfully")
+                peer.send(Protocol.server_message("Successful login"))
             
-            if poolname in self.__pools:
-                logging.debug("Pool already exists")
-                self.__pools[poolname].add_peer(peer)
             else:
-                logging.debug("Pool not exists, creating")
-                self.__pools[poolname] = Pool(poolname)
-                self.__pools[poolname].add_peer(peer)
+                logging.warning("\"" + username + "\" failed to log in")
+                peer.send(Protocol.server_message("Wrong password for user"))
             
-            peer.pool = self.__pools[poolname]
-            peer.pool.send_message(Protocol.server_message(username + " has joined the room"), peer)
+            
+            # if poolname in self.__pools:
+            #     logging.debug("Pool already exists")
+            #     self.__pools[poolname].add_peer(peer)
+            # else:
+            #     logging.debug("Pool not exists, creating")
+            #     self.__pools[poolname] = Pool(poolname)
+            #     self.__pools[poolname].add_peer(peer)
+            #
+            # peer.pool = self.__pools[poolname]
+            # peer.pool.send_message(Protocol.server_message(username + " has joined the room"), peer)
         
         
         elif command == Protocol.Flags.LOGOUT:
             logging.info("LOGOUT message received")
             peer.leave_pool()
         
+        elif command == Protocol.Flags.JOIN:
+            pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
+            hashed_pwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
+            
+            logging.info("JOIN from \"" + peer.name + "\" for pool \"" + pool_name + "\"")
+            
+            pool_id = SQLModule.PoolsSQLModule.get_id(pool_name)
+            if pool_id == -1 or hashed_pwd == SQLModule.PoolsSQLModule.get_hashed_pwd(pool_name):
+                SQLModule.PoolsSQLModule.add_pool(pool_name, hashed_pwd)
+                logging.info("Pool created with name \"" + pool_name + "\"")
+                peer.send(Protocol.server_message("Pool created with name \"" + pool_name + "\""))
+                peer_id = SQLModule.PeersSQLModule.get_id(peer.name)
+                SQLModule.SwitchTable.add_peer_pool(peer_id, pool_id)
+                logging.info("\"" + peer.name + "\" has joined \"" + pool_name + "\"  succesfully \"")
+                peer.send(Protocol.server_message("Successful join"))
+            else:
+                logging.warning("\"" + pool_name + "\" failed to log in")
+                peer.send(Protocol.server_message("Wrong password for pool"))
+        
+        
         elif command == Protocol.Flags.USER:
             logging.info("USER message received")
-            if not peer.is_logged_in():
+            if not peer.has_joined():
                 peer.send(Protocol.server_message("You gotta log in first"))
             else:
                 peer.pool.send_message(message, peer)

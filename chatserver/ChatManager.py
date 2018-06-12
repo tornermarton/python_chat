@@ -170,7 +170,7 @@ class ChatManager:
                 self.__pools[poolname].add_peer(peer)
             
             peer.pool = self.__pools[poolname]
-            peer.pool.send_message(Protocol.server_message(username + " has joined the room"))
+            peer.pool.send_message(Protocol.server_message(username + " has joined the room"), peer)
         
         
         elif command == Protocol.Flags.LOGOUT:
@@ -182,7 +182,7 @@ class ChatManager:
             if not peer.is_logged_in():
                 peer.send(Protocol.server_message("You gotta log in first"))
             else:
-                peer.pool.send_message(message)
+                peer.pool.send_message(message, peer)
         
         elif command == Protocol.Flags.PING:
             logging.info("PING message received")

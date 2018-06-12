@@ -20,6 +20,7 @@ class Protocol:
         PING = 8
         PONG = 9
         EXIT = 10  # close connection
+        SALT = 11
         
         SEPARATOR = 29
         TERMINATOR = 127

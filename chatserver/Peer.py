@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from socket import socket
 from Protocol import Protocol
 import Pool

@@ -1,8 +1,11 @@
+#!/usr/bin/python3
+
 import socket, logging, time, ssl
 from threading import Thread
 from Pool import Pool
 from Protocol import Protocol
 from Peer import Peer
+from SQLModule import SQLModule
 
 
 class ChatManager:
@@ -17,12 +20,14 @@ class ChatManager:
         self.__server_socket.bind((socket.gethostname(), 12345))
         self.__server_socket.listen(5)
         
-        self.__context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        self.__context.load_cert_chain(certfile = "cert.pem")  # 1. key, 2. cert, 3. intermediates
-        self.__context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
-        self.__context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
+        # self.__context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        # self.__context.load_cert_chain(certfile = "cert.pem")  # 1. key, 2. cert, 3. intermediates
+        # self.__context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
+        # self.__context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
         
         self.__timeout = 10 * 60
+        
+        self.__sql_module = SQLModule()
     
     def run(self):
         """

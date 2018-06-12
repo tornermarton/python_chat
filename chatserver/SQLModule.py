@@ -7,7 +7,7 @@ import Log
 
 
 class SQLModule:
-    conn = mysql.connector.connect(host = "127.0.0.1", user = "pychat", password = "pychat", database = "pychat")
+    conn = mysql.connector.connect(host = "ffabi.ddns.net", user = "pychat", password = "pychat", database = "pychat")
     cursor = conn.cursor()
     
     @staticmethod
@@ -35,9 +35,9 @@ class SQLModule:
             SQLModule.cursor.execute(query, data)
             SQLModule.conn.commit()
             if SQLModule.cursor.rowcount == 1:
-                logging.info(data + " inserted into database")
+                logging.info(str(data) + " inserted into database")
             else:
-                logging.warning(data + " is already in the database")  # nem kell sztem
+                logging.warning(str(data) + " is already in the database")  # nem kell sztem
         
         except mysql.connector.Error as e:
             SQLModule.conn.rollback()
@@ -99,4 +99,4 @@ class SQLModule:
 
 Log.loginit()
 a = SQLModule()
-SQLModule.PeersSQLModule.add_peer("asd12asd31", "asd213")
+SQLModule.PeersSQLModule.add_peer("fffasd12asd31", "asd213")

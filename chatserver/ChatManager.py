@@ -25,10 +25,15 @@ class ChatManager:
         # self.__context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1  # optional
         # self.__context.set_ciphers('EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH')
         
+        # kliens pl:
+        # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile = "cert.pem")
+        # context.options |= ssl.OP_NO_TLSv1 | ssl.OP_NO_TLSv1_1
+        # connectionToServer = context.wrap_socket(sock, server_hostname = "pychat")
+        # connectionToServer.connect(("192.168.1.19", 12345))
+
         self.__timeout = 10 * 60
         
-        self.__sql_module = SQLModule()
-    
     def run(self):
         """
         Starts accepting connections

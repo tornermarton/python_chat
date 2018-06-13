@@ -45,9 +45,9 @@ class Protocol:
         return Protocol.Message(Protocol.Flags.LOGOUT, '').get_message()
 
     @staticmethod
-    def join_message(roomname: str, password: str) -> bytes:
+    def join_message(room_name: str, password: str) -> bytes:
         return Protocol.Message(Protocol.Flags.JOIN,
-                                    roomname.encode() + bytes([Protocol.Flags.SEPARATOR]) + password.encode()
+                                    room_name.encode() + bytes([Protocol.Flags.SEPARATOR]) + password.encode()
                                 ).get_message()
 
     @staticmethod
@@ -59,8 +59,12 @@ class Protocol:
         return Protocol.Message(Protocol.Flags.SERVER, body).get_message()
     
     @staticmethod
-    def user_message(body: str) -> bytes:
-        return Protocol.Message(Protocol.Flags.USER, body).get_message()
+    def user_message(room_name: str, username: str, body: str) -> bytes:
+        return Protocol.Message(Protocol.Flags.USER,
+                                    room_name.encode() + bytes([Protocol.Flags.SEPARATOR])
+                                    + username.encode() + bytes([Protocol.Flags.SEPARATOR])
+                                    + body.encode()
+                                ).get_message()
     
     @staticmethod
     def ping_message() -> bytes:

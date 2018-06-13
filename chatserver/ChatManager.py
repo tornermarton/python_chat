@@ -267,6 +267,9 @@ class ChatManager:
             if not peer.logged_in:
                 peer.send(bytes(Protocol.ServerFlags.NAK) + Protocol.server_message("You gotta log in first"))
                 return False
+            if peer.pool is None:
+                peer.send(bytes(Protocol.ServerFlags.NAK) + Protocol.server_message("You gotta join a room first"))
+                return False
     
             logging.info("USER message received")
     

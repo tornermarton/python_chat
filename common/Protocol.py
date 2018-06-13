@@ -27,39 +27,51 @@ class Protocol:
     
     # static
     
-    max_message_size = 1024
-    max_message_body_size = max_message_size - 2
+    max_message_size: int = 1024
+    max_message_body_size: int = max_message_size - 2
     
     @staticmethod
-    def hello_message():
+    def hello_message() -> bytes:
         return Protocol.Message(Protocol.Flags.HELLO, '').get_message()
     
     @staticmethod
-    def login_message(body):
-        return Protocol.Message(Protocol.Flags.LOGIN, body).get_message()
+    def login_message(username: str, password: str) -> bytes:
+        return Protocol.Message(Protocol.Flags.LOGIN,
+                                    username.encode() + bytes([Protocol.Flags.SEPARATOR]) + password.encode()
+                                ).get_message()
     
     @staticmethod
-    def logout_message():
+    def logout_message() -> bytes:
         return Protocol.Message(Protocol.Flags.LOGOUT, '').get_message()
-    
+
     @staticmethod
-    def server_message(body):
+    def join_message(roomname: str, password: str) -> bytes:
+        return Protocol.Message(Protocol.Flags.JOIN,
+                                    roomname.encode() + bytes([Protocol.Flags.SEPARATOR]) + password.encode()
+                                ).get_message()
+
+    @staticmethod
+    def leave_message() -> bytes:
+        return Protocol.Message(Protocol.Flags.LEAVE, '').get_message()
+
+    @staticmethod
+    def server_message(body: str) -> bytes:
         return Protocol.Message(Protocol.Flags.SERVER, body).get_message()
     
     @staticmethod
-    def user_message(body):
+    def user_message(body: str) -> bytes:
         return Protocol.Message(Protocol.Flags.USER, body).get_message()
     
     @staticmethod
-    def ping_message():
+    def ping_message() -> bytes:
         return Protocol.Message(Protocol.Flags.PING, '').get_message()
     
     @staticmethod
-    def pong_message():
+    def pong_message() -> bytes:
         return Protocol.Message(Protocol.Flags.PONG, '').get_message()
     
     @staticmethod
-    def exit_message():
+    def exit_message() -> bytes:
         return Protocol.Message(Protocol.Flags.EXIT, '').get_message()
     
     class Message:

@@ -2,7 +2,6 @@
 
 from socket import socket
 from Protocol import Protocol
-import Pool
 import logging
 
 
@@ -13,9 +12,10 @@ class Peer:
     
     
     def __init__(self, connection: socket):
-        self.__connection = connection
+        self.__connection: socket = connection
         self.__username: str = ""
-        self.__pool: Pool = None
+        self.__logged_in: bool = False
+        self.__hello_done: bool = False
     
     @property
     def name(self):
@@ -24,14 +24,23 @@ class Peer:
     @name.setter
     def name(self, value: str):
         self.__username = value
-    
+        
     @property
-    def pool(self) -> Pool:
-        return self.__pool
+    def logged_in(self):
+        return self.__logged_in
     
-    @pool.setter
-    def pool(self, value: Pool):
-        self.__pool = value
+    @logged_in.setter
+    def logged_in(self, value):
+        self.__logged_in = value
+        
+    @property
+    def hello_done(self):
+        return self.__hello_done
+    
+    @hello_done.setter
+    def hello_done(self, value):
+        self.__hello_done = value
+        
     
     def send(self, bytes_message: bytes):
         self.__connection.sendall(bytes_message)
@@ -49,38 +58,14 @@ class Peer:
             return self.__connection.recv(Protocol.max_message_size)
         except ConnectionAbortedError:
             raise
-    
-    def has_joined(self) -> bool:
-        """
         
-        :return:    True, if the peer is in a pool
-        """
-        return self.__pool is not None
-    
     def terminate(self):
         """
         
-        The peer closes the connection and exits the pool
+        The peer closes the connection
         
         :return:
         """
         
         self.__connection.close()
         
-        if self.__pool is not None:
-            self.__pool.remove_peer(self)
-        
-        logging.info("User \"" + self.__username + "\" terminated")
-    
-    def leave_pool(self):
-        
-        """
-        
-        The peer leaves the pool
-        
-        :return:
-        """
-        
-        if self.__pool is not None:
-            self.__pool.remove_peer(self)
-        self.__pool = None

@@ -62,8 +62,8 @@ class Protocol:
         return Protocol.Message(Protocol.Flags.LEAVE, '').get_message()
 
     @staticmethod
-    def server_message(body: str) -> bytes:
-        return Protocol.Message(Protocol.Flags.SERVER, body).get_message()
+    def server_message(server_flag: ServerFlags, body: str) -> bytes:
+        return Protocol.Message(Protocol.Flags.SERVER, bytes([server_flag]) + body.encode()).get_message()
     
     @staticmethod
     def user_message(room_name: str, username: str, body: str) -> bytes:

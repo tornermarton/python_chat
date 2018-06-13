@@ -16,7 +16,7 @@ class Protocol:
         JOIN = 4  # join chatroom (chatroom name + SEPARATOR + chatroom hashed password)
         LEAVE = 5  # leave chatroom (chatroom name)
         SERVER = 6
-        USER = 7
+        USER = 7  # poolname + SEPARATOR + message body
         PING = 8
         PONG = 9
         EXIT = 10  # close connection

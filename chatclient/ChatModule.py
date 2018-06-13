@@ -21,6 +21,8 @@ class ChatModule(QtCore.QObject):
 
         # wire in window module
         self.__window_module: WindowModule = window_module
+        self.__window_module.onLogin.connect(self.login)
+        self.__window_module.onJoin.connect(self.join_room)
         self.__window_module.onMessageSend.connect(self.send_message)
         self.__window_module.onExit.connect(self.exit)
 
@@ -49,18 +51,28 @@ class ChatModule(QtCore.QObject):
     @QtCore.Slot(str)
     def send_message(self, message: str) -> None:
         self.__network_module.send(Protocol.user_message(self.__room_name, self.__username, message))
-        self.__window_module.display_user_message(message)
+        self.__window_module.display_self_message(message)
         self.__window_module.clear_input()
 
     def connect_to_server(self, address: str, port: int) -> None:
+        if self.__connected:
+            self.disconnect()
+
         self.__network_module.connect_to_host(address, port)
         self.__network_module.send(Protocol.hello_message())    # first message
+        self.__connected = True
 
     def disconnect_from_server(self) -> None:
-        self.__network_module.send(Protocol.exit_message())  # last message
-        self.__network_module.disconnect_from_host()
+        if self.__connected:
+            self.__network_module.send(Protocol.exit_message())  # last message
+            self.__network_module.disconnect_from_host()
+            self.__connected = False
 
+    @QtCore.Slot(str, str)
     def login(self, username: str, password: str) -> None:
+        if self.__logged_in:
+            self.logout()
+
         self.__network_module.send(Protocol.login_message(username, password))
         self.__logged_in = True
         self.__username = username
@@ -71,6 +83,7 @@ class ChatModule(QtCore.QObject):
             self.__logged_in = False
             self.__username = ''
 
+    @QtCore.Slot(str, str)
     def join_room(self, room_name: str, password: str) -> None:
         if self.__room_joined:
             self.leave_room()
@@ -97,7 +110,15 @@ class ChatModule(QtCore.QObject):
         flag = message.get_flag()
 
         if flag is Protocol.Flags.SERVER:
-            self.__window_module.display_special_message(str(message))
+            server_flag: Protocol.ServerFlags = message.get_message()[0]
+            server_message = ''
+
+            if len(str(message)) > 1:
+                server_message: str = str(message)[1:]
+
+            if server_flag is Protocol.ServerFlags.NORMAL:
+                self.__window_module.display_special_message(server_message)
+
         elif flag is Protocol.Flags.USER:
             self.__window_module.display_user_message(str(message))
         elif flag is Protocol.Flags.PING:

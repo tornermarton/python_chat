@@ -15,6 +15,9 @@ class Client:
         self.__chat_module = ChatModule(self.__network_module, self.__window_module)
 
     def run(self):
-        self.__chat_module.connect_to_server(socket.gethostname(), 12345)
-        self.__chat_module.login('marci', 'nehezjelszo')
+        # self.__chat_module.connect_to_server(socket.gethostname(), 12345)
+
+        self.__window_module.show_login_dialog()
+        self.__window_module.show_join_dialog()
+
         self.__window_module.show()

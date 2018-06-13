@@ -7,7 +7,7 @@ class Protocol:
     """The protocol for the network communication."""
     
     class Flags(IntEnum):
-        """Flags (bits) used by the protocol."""
+        """Basic flags (bits) used by the protocol."""
         
         # Flag name = byte # meaning (message body)
         HELLO = 1
@@ -24,6 +24,13 @@ class Protocol:
         
         SEPARATOR = 29
         TERMINATOR = 127
+
+    class ServerFlags(IntEnum):
+        """Flags to distinguish server messages, must be behind server message flag"""
+        NORMAL = 1
+
+        ACK = 6
+        NAK = 21
     
     # static
     

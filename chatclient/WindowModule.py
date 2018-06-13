@@ -1,19 +1,16 @@
-import threading
-
-from PySide2 import QtWidgets
+from PySide2 import QtWidgets, QtCore
 from PySide2.QtGui import QTextCursor
 
-import ChatModule
 from Protocol import Protocol
-
-lock = threading.Lock()
 
 
 class WindowModule(QtWidgets.QMainWindow):
-    def __init__(self, chat_module: ChatModule, width: int = 600, height: int = 400):
-        super(WindowModule, self).__init__()
 
-        self.__chat_module = chat_module
+    onExit = QtCore.Signal()
+    onMessageSend = QtCore.Signal(str)
+
+    def __init__(self, width: int = 600, height: int = 400):
+        super(WindowModule, self).__init__()
 
         self.resize(width, height)
         # self.setStyleSheet(open("res/css/main.css", "r").read())
@@ -26,10 +23,10 @@ class WindowModule(QtWidgets.QMainWindow):
 
         self.__chatInput = QtWidgets.QLineEdit()
         self.__chatInput.setPlaceholderText('Write your message here...')
-        self.__chatInput.returnPressed.connect(self.__onSendAction)
+        self.__chatInput.returnPressed.connect(lambda: self.onMessageSend.emit(self.__chatInput.text()))
 
         self.__sendButton = QtWidgets.QPushButton('Send')
-        self.__sendButton.clicked.connect(self.__onSendAction)
+        self.__sendButton.clicked.connect(lambda: self.onMessageSend.emit(self.__chatInput.text()))
 
         mainLayout.addWidget(self.__chatHistory, 0, 0, 1, 2)
         mainLayout.addWidget(self.__chatInput, 1, 0)
@@ -42,7 +39,6 @@ class WindowModule(QtWidgets.QMainWindow):
         self.setWindowTitle('PyChat')
 
     def displayMessage(self, message: Protocol.Message):
-        lock.acquire()
         color = "black"
         font_weight = "normal"
 
@@ -52,20 +48,15 @@ class WindowModule(QtWidgets.QMainWindow):
 
         self.__chatHistory.append('<p style="color:' + color + '; font-weight:' + font_weight + ';">' + str(message) + '</p>')
 
-        print(self.__chatHistory.toHtml())
-
         # autoscroll
         c = self.__chatHistory.textCursor()
         c.movePosition(QTextCursor.End)
         self.__chatHistory.setTextCursor(c)
         self.__chatHistory.ensureCursorVisible()
 
-        lock.release()
-
-    def __onSendAction(self):
-        if self.__chat_module.send_message(self.__chatInput.text()):
-            self.__chatInput.setText('')
+    def clearInput(self):
+        self.__chatInput.setText('')
 
     def closeEvent(self, event):
-        self.__chat_module.exit()
+        self.onExit.emit()
         exit()

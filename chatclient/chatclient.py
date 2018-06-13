@@ -3,10 +3,12 @@
 import sys
 from PySide2 import QtWidgets
 
+import Log
 from Client import Client
 
 
 def main():
+    Log.loginit()
     app = QtWidgets.QApplication(sys.argv)
     c = Client()
     c.run()

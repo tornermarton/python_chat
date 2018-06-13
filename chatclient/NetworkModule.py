@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
-import socket
-import logging
+import socket, logging
 from threading import Thread
-from typing import List
 
 from PySide2 import QtCore
 
@@ -15,10 +13,7 @@ class NetworkModule(QtCore.QObject):
 
 # public
 
-    onConnectionEstablished = QtCore.Signal()
-    onConnectionTerminated = QtCore.Signal()
-
-    onMessageReceived = QtCore.Signal(Protocol.Message)
+    onMessageReceived = QtCore.Signal(bytes)
 
     def __init__(self):
         super(NetworkModule, self).__init__()
@@ -28,10 +23,10 @@ class NetworkModule(QtCore.QObject):
 
         self.__thread: Thread = Thread(target=self.__listen)
         self.__thread.name = 'TCP listener'
-        self.__socket: socket = socket.socket()
+        self.__socket: socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__connected: bool = False
 
-    def connectToHost(self, host: str, port: int) -> None:
+    def connect_to_host(self, host: str, port: int) -> None:
         self.__host = host
         self.__port = port
 
@@ -39,23 +34,21 @@ class NetworkModule(QtCore.QObject):
         self.__socket.connect((host, port))
         self.__connected = True
 
+        logging.info('Connection established to host: ' + self.__host + ':' + str(self.__port) + '!')
+
         # start listening for messages
         self.__thread.start()
 
-        # send first message (hello)
-        self.send(Protocol.hello_message())
-
-    def disconnectFromHost(self) -> None:
-        self.send(Protocol.exit_message())
-
+    def disconnect_from_host(self) -> None:
         self.__connected = False
-        self.__thread.join()
         self.__socket.close()
+        self.__thread.join()
 
-        self.onConnectionTerminated.emit()
+        logging.info('Connection closed!')
 
     def send(self, message: bytes) -> None:
         self.__socket.send(message)
+
 
 # private
 
@@ -63,28 +56,17 @@ class NetworkModule(QtCore.QObject):
         if not self.__connected:
             raise RuntimeError('Trying to listen without correctly established connection!')
 
+        logging.info('Listening started on: '+self.__host+':'+str(self.__port)+'!')
+
         while self.__connected:
-            received: bytes = self.__socket.recv(Protocol.max_message_size)
+            try:
+                data: bytes = self.__socket.recv(Protocol.max_message_size)
 
-            if len(received) == 0:
-                logging.error('Connection closed unexpectedly by ' + self.__host + ':' + str(self.__port))
+                if len(data) == 0:
+                    continue
 
-            messages: List[bytes] = received.split(bytes([Protocol.Flags.TERMINATOR]))
+                self.onMessageReceived.emit(data)
+            except:
+                continue
 
-            for i in range(0, len(messages)-1):
-                flag: Protocol.Flags = messages[i][0]
-                body: str = ''
-                if len(messages[i]) > 1:
-                    body = messages[i][1:]
-                self.__process_message(Protocol.Message(flag, body))
-
-    def __process_message(self, message: Protocol.Message) -> None:
-        flag = message.get_flag()
-
-        if flag in (Protocol.Flags.SERVER, Protocol.Flags.USER):
-            self.onMessageReceived.emit(message)
-        elif flag == Protocol.Flags.HELLO:
-            self.onConnectionEstablished.emit()
-        elif flag == Protocol.Flags.PING:
-            self.send(Protocol.pong_message())
-
+        logging.info('Listening stopped on: '+self.__host+':'+str(self.__port)+'!')

@@ -1,8 +1,6 @@
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtGui import QTextCursor
 
-from Protocol import Protocol
-
 
 class WindowModule(QtWidgets.QMainWindow):
 
@@ -38,25 +36,30 @@ class WindowModule(QtWidgets.QMainWindow):
 
         self.setWindowTitle('PyChat')
 
-    def displayMessage(self, message: Protocol.Message):
-        color = "black"
-        font_weight = "normal"
+    def display_user_message(self, message: str) -> None:
+        self.__display_message(message)
 
-        if message.get_flag() is Protocol.Flags.SERVER:
-            color = "green"
-            font_weight = "bold"
+    def display_special_message(self, message: str) -> None:
+        self.__display_message(message, 'green', 'bold')
 
-        self.__chatHistory.append('<p style="color:' + color + '; font-weight:' + font_weight + ';">' + str(message) + '</p>')
+    def display_error_message(self, message: str) -> None:
+        self.__display_message(message, 'red', 'bold')
 
-        # autoscroll
+    def clear_input(self) -> None:
+        self.__chatInput.setText('')
+
+    def closeEvent(self, event) -> None:
+        self.onExit.emit()
+        exit()
+
+    # private
+
+    def __display_message(self, message: str, color: str = 'black', font_weight: str = 'normal') -> None:
+        self.__chatHistory.append(
+            '<p style="color:' + color + '; font-weight:' + font_weight + ';">' + message + '</p>')
+
+        # auto scroll
         c = self.__chatHistory.textCursor()
         c.movePosition(QTextCursor.End)
         self.__chatHistory.setTextCursor(c)
         self.__chatHistory.ensureCursorVisible()
-
-    def clearInput(self):
-        self.__chatInput.setText('')
-
-    def closeEvent(self, event):
-        self.onExit.emit()
-        exit()

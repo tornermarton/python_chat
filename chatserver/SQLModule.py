@@ -34,10 +34,8 @@ class SQLModule:
             
             SQLModule.cursor.execute(query, data)
             SQLModule.conn.commit()
-            if SQLModule.cursor.rowcount == 1:
-                logging.debug(str(data) + " inserted into database")
-            else:
-                logging.warning(str(data) + " is already in the database")  # nem kell sztem
+            
+            logging.debug(str(SQLModule.cursor.rowcount) + " rows effected for data " + str(data))  # nem kell sztem
         
         except mysql.connector.Error as e:
             SQLModule.conn.rollback()
@@ -53,23 +51,23 @@ class SQLModule:
         
         @staticmethod
         def get_id(username: str):
-            query = "SELECT peer_id FROM Peers WHERE username = %s"
+            query = "SELECT peer_id FROM Peers WHERE username = %s;"
             return SQLModule.get_wrapper(query, username)
         
         @staticmethod
         def get_hashed_pwd(username: str):
-            query = "SELECT hashed_pwd FROM Peers WHERE username = %s"
+            query = "SELECT hashed_pwd FROM Peers WHERE username = %s;"
             return SQLModule.get_wrapper(query, username)
         
         @staticmethod
         def get_last_online(username: str):
-            query = "SELECT last_online FROM Peers WHERE username = %s"
+            query = "SELECT last_online FROM Peers WHERE username = %s;"
             return SQLModule.get_wrapper(query, username)
         
         @staticmethod
         def add_peer(username: str, hashed_pwd: str):
     
-            query = "INSERT IGNORE INTO Peers (username, hashed_pwd, last_online) VALUES (%s, %s, %s)"
+            query = "INSERT IGNORE INTO Peers (username, hashed_pwd, last_online) VALUES (%s, %s, %s);"
             SQLModule.insert_wrapper(query, (username, hashed_pwd, SQLModule.now()))
             
     
@@ -78,22 +76,22 @@ class SQLModule:
         
         @staticmethod
         def get_id(username: str):
-            query = "SELECT pool_id FROM Pools WHERE pool_name = %s"
+            query = "SELECT pool_id FROM Pools WHERE pool_name = %s;"
             return SQLModule.get_wrapper(query, username)
         
         @staticmethod
         def get_hashed_pwd(username: str):
-            query = "SELECT hashed_pwd FROM Pools WHERE pool_name = %s"
+            query = "SELECT hashed_pwd FROM Pools WHERE pool_name = %s;"
             return SQLModule.get_wrapper(query, username)
         
         @staticmethod
         def get_last_message(username: str):
-            query = "SELECT last_message FROM Pools WHERE pool_name = %s"
+            query = "SELECT last_message FROM Pools WHERE pool_name = %s;"
             return SQLModule.get_wrapper(query, username)
 
         @staticmethod
         def add_pool(pool_name: str, hashed_pwd: str):
-            query = "INSERT IGNORE INTO Pools (pool_name, hashed_pwd, last_message) VALUES (%s, %s, %s)"
+            query = "INSERT IGNORE INTO Pools (pool_name, hashed_pwd, last_message) VALUES (%s, %s, %s);"
             SQLModule.insert_wrapper(query, (pool_name, hashed_pwd, SQLModule.now()))
             
     
@@ -101,10 +99,16 @@ class SQLModule:
         
         @staticmethod
         def add_peer_pool(peer_id: int, pool_id: int):
-            query = "INSERT IGNORE INTO pools_peers_connector (Peers_peer_id, Pools_pool_id) VALUES (%s, %s)"
+            query = "INSERT IGNORE INTO pools_peers_connector (Peers_peer_id, Pools_pool_id) VALUES (%s, %s);"
             SQLModule.insert_wrapper(query, (peer_id, pool_id, ))
+            
+        @staticmethod
+        def remove_peer_pool(peer_id: int, pool_id: int):
+            query = "DELETE FROM pools_peers_connector WHERE Peers_peer_id = %s AND Pools_pool_id = %s;"
+            SQLModule.insert_wrapper(query, (peer_id, pool_id, ))
+            return SQLModule.cursor.rowcount == 1
+
 
 
 # Log.loginit()
-# a = SQLModule()
-# SQLModule.PoolsSQLModule.add_pool("general", "general")
+# SQLModule.SwitchTable.remove_peer_pool(51, 1)

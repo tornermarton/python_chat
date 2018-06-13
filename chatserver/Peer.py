@@ -3,6 +3,7 @@
 from socket import socket
 from Protocol import Protocol
 import logging
+import Pool
 
 
 class Peer:
@@ -13,9 +14,10 @@ class Peer:
     
     def __init__(self, connection: socket):
         self.__connection: socket = connection
-        self.__username: str = ""
+        self.__username: str = None
         self.__logged_in: bool = False
         self.__hello_done: bool = False
+        self.__pool: Pool = None
     
     @property
     def name(self):
@@ -24,6 +26,14 @@ class Peer:
     @name.setter
     def name(self, value: str):
         self.__username = value
+
+    @property
+    def pool(self) -> Pool:
+        return self.__pool
+
+    @pool.setter
+    def pool(self, value: Pool):
+        self.__pool = value
         
     @property
     def logged_in(self):
@@ -69,3 +79,18 @@ class Peer:
         
         self.__connection.close()
         
+        if self.__pool is not None:
+            self.__pool.remove_peer(self)
+
+    def leave_pool(self):
+    
+        """
+
+        The peer leaves the pool
+
+        :return:
+        """
+    
+        if self.__pool is not None:
+            self.__pool.remove_peer(self)
+        self.__pool = None

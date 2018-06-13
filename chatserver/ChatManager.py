@@ -4,6 +4,7 @@ import socket, logging, time, ssl
 from threading import Thread
 from Protocol import Protocol
 from Peer import Peer
+from Pool import Pool
 from SQLModule import SQLModule
 
 
@@ -13,6 +14,8 @@ class ChatManager:
     """
     
     def __init__(self):
+        self.__pools = {}
+    
         self.__server_socket = socket.socket()
         self.__server_socket.bind((socket.gethostname(), 12345))
         self.__server_socket.listen(5)
@@ -107,33 +110,25 @@ class ChatManager:
     
     @staticmethod
     def __receive(peer: Peer, received: bytes) -> (bytes, bytes, bytes, bool):
-        # part: bytes = b""
         terminator_index = received.find(bytes([Protocol.Flags.TERMINATOR]))
         while terminator_index == -1:
             part: bytes = peer.receive()
             received += part
-        
+            
             terminator_index = received.find(bytes([Protocol.Flags.TERMINATOR]))
-        
+            
             if len(part) == 0:
                 logging.warning("Connection unexpectedly closed")
                 peer.terminate()
                 return None, None, None, True
-    
-        # if len(part) == 0:
-        #     print(terminator_index)
-        #     if terminator_index == -1:
-        #         peer.terminate()
-        #         return None, None, None, True
-    
+
         logging.debug("Message received: " + str(received))
-    
+        
         command = received[0]
-        message_body = received[1:terminator_index]
+        body = received[1:terminator_index]
         received = received[terminator_index + 1:]
-    
-        return command, message_body, received, False
-    
+        
+        return command, body, received, False
     
     @staticmethod
     def __receive_hello(peer: Peer, command: bytes):
@@ -159,14 +154,14 @@ class ChatManager:
     def __receive_login(peer: Peer, command: bytes, message: bytes):
         if command == Protocol.Flags.LOGIN:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
-            hashed_pwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
+            passwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
             
-            logging.info("LOGIN from \"" + username + "\" with hash \"" + hashed_pwd + "\"")
+            logging.info("LOGIN from \"" + username + "\" with password \"" + passwd + "\"")
             
             peer_id = SQLModule.PeersSQLModule.get_id(username)
-            if peer_id == -1 or hashed_pwd == SQLModule.PeersSQLModule.get_hashed_pwd(username):
+            if peer_id == -1 or passwd == SQLModule.PeersSQLModule.get_hashed_pwd(username):
                 if peer_id == -1:
-                    SQLModule.PeersSQLModule.add_peer(username, hashed_pwd)
+                    SQLModule.PeersSQLModule.add_peer(username, passwd)
                     logging.info("Account created for \"" + username + "\"")
                     peer.send(Protocol.server_message("Account created for \"" + username + "\""))
                 peer.name = username
@@ -179,8 +174,7 @@ class ChatManager:
                 peer.send(Protocol.server_message("Wrong password for this user"))
                 peer.logged_in = False
     
-    @staticmethod
-    def __process_message(peer: Peer, command: bytes, message: bytes) -> bool:
+    def __process_message(self, peer: Peer, command: bytes, message: bytes) -> bool:
         """
         
         Processes the received message
@@ -198,42 +192,54 @@ class ChatManager:
         elif command == Protocol.Flags.LOGIN:
             logging.warning("User \"" + peer.name + "\" is already logged in")
             peer.send(Protocol.server_message("You are already logged in"))
-
+        
         elif command == Protocol.Flags.PING:
             logging.info("PING message received")
             peer.send(Protocol.pong_message())
-
+        
         elif command == Protocol.Flags.PONG:
             logging.info("PONG message received")
-
+        
         elif command == Protocol.Flags.EXIT:
             logging.info("EXIT message received, connection closed")
             peer.send(Protocol.server_message("See you later"))
             return True
-
+        
         elif command == Protocol.Flags.LOGOUT:
             if not peer.logged_in:
                 return False
             logging.info("LOGOUT message received from \"" + peer.name + "\"")
             peer.logged_in = False
-            peer.name = ""
+            peer.name = None
         
         elif command == Protocol.Flags.JOIN:
             if not peer.logged_in:
                 return False
-
-            pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
-            hashed_pwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
             
-            logging.info("JOIN from \"" + peer.name + "\" for pool \"" + pool_name + "\"")
+            pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
+            passwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
+            
+            logging.info("JOIN from \"" + peer.name + "\" for pool \"" + pool_name + "\" with password " + passwd)
             
             pool_id = SQLModule.PoolsSQLModule.get_id(pool_name)
-            if pool_id == -1 or hashed_pwd == SQLModule.PoolsSQLModule.get_hashed_pwd(pool_name):
+            if pool_id == -1 or passwd == SQLModule.PoolsSQLModule.get_hashed_pwd(pool_name):
                 if pool_id == -1:
-                    SQLModule.PoolsSQLModule.add_pool(pool_name, hashed_pwd)
+                    SQLModule.PoolsSQLModule.add_pool(pool_name, passwd)
                     logging.info("Pool created with name \"" + pool_name + "\"")
+                    
                 peer.send(Protocol.server_message("Pool created with name \"" + pool_name + "\""))
                 peer_id = SQLModule.PeersSQLModule.get_id(peer.name)
+                if pool_name in self.__pools:
+                    logging.debug("Pool already exists")
+                    self.__pools[pool_name].add_peer(peer)
+                else:
+                    logging.debug("Pool not exists, creating")
+                    self.__pools[pool_name] = Pool(pool_name)
+                    self.__pools[pool_name].add_peer(peer)
+
+                peer.pool = self.__pools[pool_name]
+                peer.pool.send_message(Protocol.server_message(peer.name + " has joined the room"), peer)
+                
                 SQLModule.SwitchTable.add_peer_pool(peer_id, pool_id)
                 logging.info("\"" + peer.name + "\" has joined \"" + pool_name + "\" succesfully \"")
                 peer.send(Protocol.server_message("Successful join"))
@@ -244,20 +250,28 @@ class ChatManager:
         elif command == Protocol.Flags.LEAVE:
             if not peer.logged_in:
                 return False
+            pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             
+            logging.info("LEAVE from \"" + peer.name + "\" for pool \"" + pool_name + "\"")
+            
+            peer_id = SQLModule.PeersSQLModule.get_id(peer.name)
+            pool_id = SQLModule.PoolsSQLModule.get_id(pool_name)
+            
+            if SQLModule.SwitchTable.remove_peer_pool(peer_id, pool_id):
+                peer.send(Protocol.server_message("You've left the group"))
+
+            peer.leave_pool()
         
         elif command == Protocol.Flags.USER:
             if not peer.logged_in:
-                return False
-
-            logging.info("USER message received")
-            #  TODO
-            if not peer.has_joined():
                 peer.send(Protocol.server_message("You gotta log in first"))
-            else:
-                peer.pool.send_message(message, peer)
-        
-        
+                return False
+    
+            logging.info("USER message received")
+    
+            peer.pool.send_message(message, peer)
+    
+
         elif command == Protocol.Flags.SERVER:
             logging.warning("Server received SERVER message, connection closed")
             peer.send(Protocol.server_message("Did u just try to send a server message to the server? XD"))
@@ -266,3 +280,5 @@ class ChatManager:
         else:
             peer.send(Protocol.server_message("Invalid message received"))
             logging.warning("Invalid message received")
+            
+        return False

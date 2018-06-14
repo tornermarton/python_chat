@@ -88,9 +88,7 @@ class Protocol:
 
     @staticmethod
     def split_message_body(body: bytes) -> List[bytes]:
-        parts: List[bytes] = body.split(bytes([Protocol.Flags.SEPARATOR]))
-
-        return parts[:-1]
+        return body.split(bytes([Protocol.Flags.SEPARATOR]))
     
     class Message:
         """Protocol messages"""

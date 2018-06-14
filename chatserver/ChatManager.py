@@ -6,6 +6,7 @@ from Protocol import Protocol
 from Peer import Peer
 from Pool import Pool
 from SQLModule import SQLModule
+from bcrypt import hashpw
 
 
 class ChatManager:
@@ -155,13 +156,13 @@ class ChatManager:
         if command == Protocol.Flags.LOGIN:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             passwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
-            
-            logging.info("LOGIN from \"" + username + "\" with password \"" + passwd + "\"")
+            hashed = str(hashpw(passwd.encode("utf-8"), b"$2a$12$" + b"SZ4R4Z3G3SZ4DJ4LS0RT..")).split("..")[1]
+            logging.info("LOGIN from \"" + username + "\"")
             
             peer_id = SQLModule.PeersSQLModule.get_id(username)
-            if peer_id == -1 or passwd == SQLModule.PeersSQLModule.get_hashed_pwd(username):
+            if peer_id == -1 or hashed == SQLModule.PeersSQLModule.get_hashed_pwd(username):
                 if peer_id == -1:
-                    SQLModule.PeersSQLModule.add_peer(username, passwd)
+                    SQLModule.PeersSQLModule.add_peer(username, hashed)
                     logging.info("Account created for \"" + username + "\"")
                     peer.send(Protocol.server_message(Protocol.ServerFlags.ACK, "Account created for \"" + username + "\""))
                 peer.name = username
@@ -218,13 +219,14 @@ class ChatManager:
             
             pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             passwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
-            
-            logging.info("JOIN from \"" + peer.name + "\" for pool \"" + pool_name + "\" with password " + passwd)
+            hashed = str(hashpw(passwd.encode("utf-8"), b"$2a$12$" + b"SZ4R4Z3G3SZ4DJ4LS0RT..")).split("..")[1]
+
+            logging.info("JOIN from \"" + peer.name + "\" for pool \"" + pool_name + "\"")
             
             pool_id = SQLModule.PoolsSQLModule.get_id(pool_name)
-            if pool_id == -1 or passwd == SQLModule.PoolsSQLModule.get_hashed_pwd(pool_name):
+            if pool_id == -1 or hashed == SQLModule.PoolsSQLModule.get_hashed_pwd(pool_name):
                 if pool_id == -1:
-                    SQLModule.PoolsSQLModule.add_pool(pool_name, passwd)
+                    SQLModule.PoolsSQLModule.add_pool(pool_name, hashed)
                     logging.info("Pool created with name \"" + pool_name + "\"")
                     peer.send(Protocol.server_message(Protocol.ServerFlags.ACK, "Pool created with name \"" + pool_name + "\""))
                 

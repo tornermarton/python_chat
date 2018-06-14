@@ -1,6 +1,7 @@
 from PySide2 import QtWidgets, QtCore
 from PySide2.QtGui import QTextCursor
 
+from JoinDialog import JoinDialog
 from LoginDialog import LoginDialog
 
 

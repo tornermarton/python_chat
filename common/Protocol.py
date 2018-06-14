@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 from enum import IntEnum
+from typing import List
 
 
 class Protocol:
@@ -84,6 +85,12 @@ class Protocol:
     @staticmethod
     def exit_message() -> bytes:
         return Protocol.Message(Protocol.Flags.EXIT, '').get_message()
+
+    @staticmethod
+    def split_message_body(body: bytes) -> List[bytes]:
+        parts: List[bytes] = body.split(bytes([Protocol.Flags.SEPARATOR]))
+
+        return parts[:-1]
     
     class Message:
         """Protocol messages"""
@@ -110,5 +117,8 @@ class Protocol:
         def get_flag(self):
             return self.__flag
         
-        def get_message(self):
+        def get_message(self) -> bytes:
             return bytes([self.__flag]) + self.__body + bytes([Protocol.Flags.TERMINATOR])
+
+        def get_body_split(self) -> List[bytes]:
+            return Protocol.split_message_body(self.__body)

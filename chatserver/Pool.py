@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from typing import List
-import Peer
+import Peer, Protocol
 
 
 class Pool:
@@ -27,4 +27,5 @@ class Pool:
     def send_message(self, message: bytes, sender: Peer):
         for peer in self.__peers:
             if peer is not sender:
-                peer.send(message)
+                # peer.send(message)
+                peer.send(Protocol.Protocol.user_message(self.__name, peer.name, message.decode()))

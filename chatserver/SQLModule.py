@@ -7,7 +7,7 @@ import Log
 
 
 class SQLModule:
-    conn = mysql.connector.connect(host = "ffabi.ddns.net", user = "pychat", password = "pychat", database = "pychat")
+    conn = mysql.connector.connect(pool_name = "asd", pool_size = 5, host = "ffabi.ddns.net", user = "pychat", password = "pychat", database = "pychat")
     cursor = conn.cursor()
     
     @staticmethod

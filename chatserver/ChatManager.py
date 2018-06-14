@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import socket, logging, time, ssl
+import socket, logging, time
 from threading import Thread
 from Protocol import Protocol
 from Peer import Peer
@@ -203,7 +203,7 @@ class ChatManager:
         
         elif command == Protocol.Flags.EXIT:
             logging.info("EXIT message received, connection closed")
-            peer.send(Protocol.server_message(Protocol.ServerFlags.NORMAL, "See you later"))
+            # peer.send(Protocol.server_message(Protocol.ServerFlags.NORMAL, "See you later"))
             return True
         
         elif command == Protocol.Flags.LOGOUT:
@@ -219,7 +219,7 @@ class ChatManager:
             
             pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             passwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
-            hashed = str(hashpw(passwd.encode("utf-8"), b"$2a$12$" + b"SZ4R4Z3G3SZ4DJ4LS0RT..")).split("..")[1]
+            hashed = str(hashpw(passwd.encode("utf-8"), b"$2a$12$" + b"SZ4R4Z3G3SZ4DJ4LS0RT..")).split("..")[1][:-1]
 
             logging.info("JOIN from \"" + peer.name + "\" for pool \"" + pool_name + "\"")
             
@@ -276,7 +276,7 @@ class ChatManager:
             
             logging.info("USER message received")
             
-            peer.pool.send_message(message, peer)
+            peer.pool.send_message(message.split(bytes([Protocol.Flags.SEPARATOR]))[-1], peer)
         
         
         elif command == Protocol.Flags.SERVER:

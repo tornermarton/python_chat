@@ -41,7 +41,7 @@ class SQLModule:
             SQLModule.conn.rollback()
             logging.error("SQL Error: " + str(e))
             pass
-        
+    
     @staticmethod
     def now():
         return str(datetime.utcnow()).split(".")[0]
@@ -66,10 +66,8 @@ class SQLModule:
         
         @staticmethod
         def add_peer(username: str, hashed_pwd: str):
-    
             query = "INSERT IGNORE INTO Peers (username, hashed_pwd, last_online) VALUES (%s, %s, %s);"
             SQLModule.insert_wrapper(query, (username, hashed_pwd, SQLModule.now()))
-            
     
     
     class PoolsSQLModule:
@@ -88,26 +86,25 @@ class SQLModule:
         def get_last_message(username: str):
             query = "SELECT last_message FROM Pools WHERE pool_name = %s;"
             return SQLModule.get_wrapper(query, username)
-
+        
         @staticmethod
         def add_pool(pool_name: str, hashed_pwd: str):
             query = "INSERT IGNORE INTO Pools (pool_name, hashed_pwd, last_message) VALUES (%s, %s, %s);"
             SQLModule.insert_wrapper(query, (pool_name, hashed_pwd, SQLModule.now()))
-            
+    
     
     class SwitchTable:
         
         @staticmethod
         def add_peer_pool(peer_id: int, pool_id: int):
             query = "INSERT IGNORE INTO pools_peers_connector (Peers_peer_id, Pools_pool_id) VALUES (%s, %s);"
-            SQLModule.insert_wrapper(query, (peer_id, pool_id, ))
-            
+            SQLModule.insert_wrapper(query, (peer_id, pool_id,))
+        
         @staticmethod
         def remove_peer_pool(peer_id: int, pool_id: int):
             query = "DELETE FROM pools_peers_connector WHERE Peers_peer_id = %s AND Pools_pool_id = %s;"
-            SQLModule.insert_wrapper(query, (peer_id, pool_id, ))
+            SQLModule.insert_wrapper(query, (peer_id, pool_id,))
             return SQLModule.cursor.rowcount == 1
-
 
 
 # Log.loginit()

@@ -276,9 +276,13 @@ class ChatManager:
             
             logging.info("USER message received")
             
-            peer.pool.send_message(message.split(bytes([Protocol.Flags.SEPARATOR]))[-1], peer)
-        
-        
+            # peer.pool.send_message(message.split(bytes([Protocol.Flags.SEPARATOR]))[-1], peer)
+            # peer.send(Protocol.Protocol.user_message(self.__name, peer.name, message.decode()))
+
+
+            peer.pool.send_message(Protocol.user_message(peer.pool.name, peer.name, message.split(bytes([Protocol.Flags.SEPARATOR]))[-1].decode()), peer)
+
+
         elif command == Protocol.Flags.SERVER:
             logging.warning("Server received SERVER message, connection closed")
             return True

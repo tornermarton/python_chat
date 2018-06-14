@@ -47,7 +47,10 @@ class NetworkModule(QtCore.QObject):
         logging.info('Connection closed!')
 
     def send(self, message: bytes) -> None:
-        self.__socket.send(message)
+        try:
+            self.__socket.send(message)
+        except:
+            self.disconnect_from_host()
 
 
 # private

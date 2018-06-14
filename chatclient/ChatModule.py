@@ -1,12 +1,10 @@
 #!/usr/bin/python3
-import logging
 from typing import List
 
 from PySide2 import QtCore
 
 from Protocol import Protocol
 
-# must be in this form to catch circular import
 import WindowModule
 import NetworkModule
 
@@ -63,7 +61,7 @@ class ChatModule(QtCore.QObject):
         if not self.__connected or not self.__logged_in or not self.__room_joined:
             return
 
-        self.__network_module.send(Protocol.user_message(self.__room_name, self.__username, message))
+        self.__network_module.send(Protocol.user_message(self.__room_name, self.__username, message.strip()))
         self.__window_module.display_self_message(message)
         self.__window_module.clear_input()
 
@@ -90,7 +88,11 @@ class ChatModule(QtCore.QObject):
         self.__logged_in = True
         self.__username = username
 
+        self.__window_module.add_title_text(self.__username)
+
     def logout(self) -> None:
+        if self.__room_joined:
+            self.leave_room()
         if self.__logged_in:
             self.__network_module.send(Protocol.logout_message())
             self.__logged_in = False
@@ -105,6 +107,7 @@ class ChatModule(QtCore.QObject):
         self.__room_joined = True
         self.__room_name = room_name
 
+        self.__window_module.add_title_text(self.__username + '@' + self.__room_name)
         self.__window_module.display_special_message('You joined the room \'' + room_name + '\' successfully!')
 
     def leave_room(self) -> None:
@@ -137,6 +140,8 @@ class ChatModule(QtCore.QObject):
                 self.__window_module.display_special_message(server_message)
 
         elif flag is Protocol.Flags.USER:
-            self.__window_module.display_user_message(str(message))
+            parts: List[bytes] = message.get_body_split()
+            if len(parts) == 3:
+                self.__window_module.display_user_message(parts[1], parts[2])
         elif flag is Protocol.Flags.PING:
             self.__network_module.send(Protocol.pong_message())

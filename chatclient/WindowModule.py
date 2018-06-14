@@ -63,6 +63,9 @@ class WindowModule(QtWidgets.QMainWindow):
         if ok:
             self.onJoin.emit(room_name, password)
 
+    def add_title_text(self, text: str):
+        self.setWindowTitle('PyChat - ' + text)
+
     def clear_input(self) -> None:
         self.__chatInput.setText('')
 

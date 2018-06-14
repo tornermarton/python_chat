@@ -156,7 +156,7 @@ class ChatManager:
         if command == Protocol.Flags.LOGIN:
             username = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
             passwd = message.split(bytes([Protocol.Flags.SEPARATOR]))[1].decode()
-            hashed = str(hashpw(passwd.encode("utf-8"), b"$2a$12$" + b"SZ4R4Z3G3SZ4DJ4LS0RT..")).split("..")[1]
+            hashed = str(hashpw(passwd.encode("utf-8"), b"$2a$12$" + b"SZ4R4Z3G3SZ4DJ4LS0RT..")).split("..")[1][:-1]
             logging.info("LOGIN from \"" + username + "\"")
             
             peer_id = SQLModule.PeersSQLModule.get_id(username)
@@ -225,11 +225,6 @@ class ChatManager:
             
             pool_id = SQLModule.PoolsSQLModule.get_id(pool_name)
             if pool_id == -1 or hashed == SQLModule.PoolsSQLModule.get_hashed_pwd(pool_name):
-                if pool_id == -1:
-                    SQLModule.PoolsSQLModule.add_pool(pool_name, hashed)
-                    logging.info("Pool created with name \"" + pool_name + "\"")
-                    peer.send(Protocol.server_message(Protocol.ServerFlags.ACK, "Pool created with name \"" + pool_name + "\""))
-                
                 if pool_name in self.__pools:
                     logging.debug("Pool already exists")
                     self.__pools[pool_name].add_peer(peer)
@@ -237,12 +232,18 @@ class ChatManager:
                     logging.debug("Pool not exists, creating")
                     self.__pools[pool_name] = Pool(pool_name)
                     self.__pools[pool_name].add_peer(peer)
-                
+                    
+                if pool_id == -1:
+                    SQLModule.PoolsSQLModule.add_pool(pool_name, hashed)
+                    logging.info("Pool created with name \"" + pool_name + "\"")
+                    peer.send(Protocol.server_message(Protocol.ServerFlags.ACK, "Pool created with name \"" + pool_name + "\""))
+
+                pool_id = SQLModule.PoolsSQLModule.get_id(pool_name)
                 peer_id = SQLModule.PeersSQLModule.get_id(peer.name)
                 SQLModule.SwitchTable.add_peer_pool(peer_id, pool_id)
-                logging.info("\"" + peer.name + "\" has joined \"" + pool_name + "\" succesfully \"")
+                logging.info("\"" + peer.name + "\" has joined \"" + pool_name + "\" succesfully")
                 peer.send(Protocol.server_message(Protocol.ServerFlags.ACK, "Successful join"))
-                
+    
                 peer.pool = self.__pools[pool_name]
                 peer.pool.send_message(Protocol.server_message(Protocol.ServerFlags.NORMAL, peer.name + " has joined the room"), peer)
             
@@ -253,8 +254,8 @@ class ChatManager:
         elif command == Protocol.Flags.LEAVE:
             if not peer.logged_in:
                 return False
-            pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
-            
+            # pool_name = message.split(bytes([Protocol.Flags.SEPARATOR]))[0].decode()
+            pool_name = peer.pool.name
             logging.info("LEAVE from \"" + peer.name + "\" for pool \"" + pool_name + "\"")
             
             peer_id = SQLModule.PeersSQLModule.get_id(peer.name)

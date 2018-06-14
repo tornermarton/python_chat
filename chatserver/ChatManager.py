@@ -92,7 +92,7 @@ class ChatManager:
             
             except socket.timeout:
                 logging.warning("Connection timeout")
-                peer.send(Protocol.server_message(Protocol.ServerFlags.NAK, "Connection timeout"))
+                peer.send(Protocol.server_message(Protocol.ServerFlags.NORMAL, "Connection timeout"))
                 peer.terminate()
                 break
             
@@ -265,10 +265,10 @@ class ChatManager:
         
         elif command == Protocol.Flags.USER:
             if not peer.logged_in:
-                peer.send(Protocol.server_message(Protocol.ServerFlags.NAK, "You gotta log in first"))
+                peer.send(Protocol.server_message(Protocol.ServerFlags.NORMAL, "You gotta log in first"))
                 return False
             if peer.pool is None:
-                peer.send(Protocol.server_message(Protocol.ServerFlags.NAK, "You gotta join a room first"))
+                peer.send(Protocol.server_message(Protocol.ServerFlags.NORMAL, "You gotta join a room first"))
                 return False
             
             logging.info("USER message received")
@@ -281,7 +281,7 @@ class ChatManager:
             return True
         
         else:
-            peer.send(Protocol.server_message(Protocol.ServerFlags.NAK, "Invalid message received"))
+            peer.send(Protocol.server_message(Protocol.ServerFlags.NORMAL, "Invalid message received"))
             logging.warning("Invalid message received")
         
         return False

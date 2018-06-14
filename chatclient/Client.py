@@ -18,6 +18,7 @@ class Client:
         self.__chat_module.connect_to_server(socket.gethostname(), 12345)
 
         self.__window_module.show_login_dialog()
-        self.__window_module.show_join_dialog()
+        # self.__window_module.show_join_dialog()
+        self.__chat_module.join_room('general', 'general')
 
         self.__window_module.show()

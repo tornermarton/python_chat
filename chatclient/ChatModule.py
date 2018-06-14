@@ -50,6 +50,19 @@ class ChatModule(QtCore.QObject):
 
     @QtCore.Slot(str)
     def send_message(self, message: str) -> None:
+        if len(message.strip()) == 0:
+            return
+
+        if not self.__connected:
+            self.__window_module.display_error_message('You must be connected to the server to send messages!')
+        if not self.__logged_in:
+            self.__window_module.display_error_message('You must be logged in to send messages!')
+        if not self.__room_joined:
+            self.__window_module.display_error_message('You must be joined to a room to send messages!')
+
+        if not self.__connected or not self.__logged_in or not self.__room_joined:
+            return
+
         self.__network_module.send(Protocol.user_message(self.__room_name, self.__username, message))
         self.__window_module.display_self_message(message)
         self.__window_module.clear_input()
@@ -92,11 +105,15 @@ class ChatModule(QtCore.QObject):
         self.__room_joined = True
         self.__room_name = room_name
 
+        self.__window_module.display_special_message('You joined the room \'' + room_name + '\' successfully!')
+
     def leave_room(self) -> None:
         if self.__room_joined:
             self.__network_module.send(Protocol.leave_message())
             self.__room_joined = False
             self.__room_name = ''
+
+        self.__window_module.display_special_message('You left the room!')
 
     @QtCore.Slot()
     def exit(self) -> None:
@@ -110,7 +127,7 @@ class ChatModule(QtCore.QObject):
         flag = message.get_flag()
 
         if flag is Protocol.Flags.SERVER:
-            server_flag: Protocol.ServerFlags = message.get_message()[0]
+            server_flag: Protocol.ServerFlags = Protocol.ServerFlags(message.get_message()[1])
             server_message = ''
 
             if len(str(message)) > 1:

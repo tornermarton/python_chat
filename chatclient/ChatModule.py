@@ -38,13 +38,13 @@ class ChatModule(QtCore.QObject):
     @QtCore.Slot(bytes)
     def receive_message(self, data: bytes) -> None:
         messages: List[bytes] = data.split(bytes([Protocol.Flags.TERMINATOR]))
-
-        for i in range(0, len(messages) - 1):
-            flag: Protocol.Flags = messages[i][0]
-            body: str = ''
-            if len(messages[i]) > 1:
-                body = messages[i][1:]
-            self.__process_message(Protocol.Message(flag, body))
+        if len(messages) > 0:
+            for i in range(0, len(messages) - 1):
+                flag: Protocol.Flags = messages[i][0]
+                body: str = ''
+                if len(messages[i]) > 1:
+                    body = messages[i][1:]
+                self.__process_message(Protocol.Message(flag, body))
 
     @QtCore.Slot(str)
     def send_message(self, message: str) -> None:
@@ -142,6 +142,7 @@ class ChatModule(QtCore.QObject):
         elif flag is Protocol.Flags.USER:
             parts: List[bytes] = message.get_body_split()
             if len(parts) == 3:
-                self.__window_module.display_user_message(parts[1], parts[2])
+                self.__window_module.display_user_message(parts[1].decode(), parts[2].decode())
+
         elif flag is Protocol.Flags.PING:
             self.__network_module.send(Protocol.pong_message())
